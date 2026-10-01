@@ -26,7 +26,7 @@ def main():
     charmap = json.loads(out.read_text()) if out.exists() else {}
     for sheet_path in args.sheets:
         sheet = json.loads(Path(sheet_path).read_text())
-        for r in pipeline.read_sheet(ROOT / sheet["image"], sheet["rows"]):
+        for r in pipeline.read_sheet(ROOT / sheet["image"], sheet["rows"], sheet.get("crop")):
             charmap[r.char] = codec.to_hex(codec.segments_to_int(r.segments))
             print(r.char, charmap[r.char])
     out.write_text(json.dumps(charmap, ensure_ascii=False, indent=2) + "\n")

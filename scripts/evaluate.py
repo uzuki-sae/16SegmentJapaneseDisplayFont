@@ -1,6 +1,7 @@
 """手書き画像の読み取り結果を正解データと突き合わせる。
 
 使い方: python scripts/evaluate.py data/kansuji_truth.json [--debug OUT.png]
+正解 "segments" に無い文字は、読み取り結果だけを表示する（正解データ作成用）。
 """
 
 import argparse
@@ -32,12 +33,17 @@ def main():
     args = ap.parse_args()
 
     truth = json.loads(Path(args.truth).read_text())
-    readings = pipeline.read_sheet(ROOT / truth["image"], truth["rows"])
+    readings = pipeline.read_sheet(ROOT / truth["image"], truth["rows"], truth.get("crop"))
 
     debug = Image.open(ROOT / truth["image"]).convert("RGB") if args.debug else None
     ok = 0
     for r in readings:
         cov, got = r.coverages, r.segments
+        if r.char not in truth.get("segments", {}):
+            print(f"?? {r.char} got={seg_str(got)}")
+            if debug:
+                draw_debug(ImageDraw.Draw(debug), r.cell, got, got)
+            continue
         want = parse(truth["segments"][r.char])
         mark = "OK " if got == want else "NG "
         ok += got == want
