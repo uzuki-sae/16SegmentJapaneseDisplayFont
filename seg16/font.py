@@ -14,6 +14,25 @@ UNITS_PER_EM = 1000
 SCALE = 6.5  # SVG 1 単位 → フォント単位。Style の 100x140 が 650x910 になる
 DESCENT = 120  # 字の下端をベースラインからどれだけ下げるか
 FAMILY = "Seg16"
+KANSUJI = "〇一二三四五六七八九"
+HIRAGANA_OFFSET = 0x60  # ひらがな = カタカナ - 0x60（ぁ U+3041 〜 ゖ U+3096）
+
+
+def default_aliases(charmap):
+    """別の文字コードから同じ字形を出すための対応 {別名の文字: 対照表の文字}。
+
+    - アラビア数字 0〜9 と全角数字 ０〜９ → 漢数字 〇〜九
+    - ひらがな → 対応するカタカナ
+    対照表に無い字への対応や、対照表に既にある字の上書きは作らない。
+    """
+    aliases = {}
+    for i, kan in enumerate(KANSUJI):
+        aliases[str(i)] = kan
+        aliases[chr(ord("０") + i)] = kan
+    for kata in charmap:
+        if "\u30a1" <= kata <= "\u30f6":
+            aliases[chr(ord(kata) - HIRAGANA_OFFSET)] = kata
+    return {a: t for a, t in aliases.items() if t in charmap and a not in charmap}
 
 
 def _signed_area(points):
@@ -51,8 +70,12 @@ def glyph_name(ch):
     return f"uni{ord(ch):04X}" if ord(ch) <= 0xFFFF else f"u{ord(ch):05X}"
 
 
-def build_font(charmap, path, st=None, family=FAMILY, version="0.1"):
-    """charmap: {文字: 16進4桁}。path に .otf を書き出す。"""
+def build_font(charmap, path, st=None, family=FAMILY, version="0.1", aliases=None):
+    """charmap: {文字: 16進4桁}。path に .otf を書き出す。
+
+    aliases: {別名の文字: 対照表の文字}。省略すると default_aliases を使う。
+    """
+    aliases = default_aliases(charmap) if aliases is None else aliases
     st = st or Style()
     width = round(st.width * SCALE)
     ascent = round(st.height * SCALE) - DESCENT
@@ -68,7 +91,9 @@ def build_font(charmap, path, st=None, family=FAMILY, version="0.1"):
 
     fb = FontBuilder(UNITS_PER_EM, isTTF=False)
     fb.setupGlyphOrder(order)
-    fb.setupCharacterMap({ord(" "): "space", **{ord(ch): names[ch] for ch in charmap}})
+    cmap = {ord(" "): "space", **{ord(ch): names[ch] for ch in charmap}}
+    cmap.update({ord(a): names[t] for a, t in aliases.items()})
+    fb.setupCharacterMap(cmap)
     fb.setupCFF(
         f"{family}-Regular", {"FullName": f"{family} Regular"}, charstrings, {}
     )
