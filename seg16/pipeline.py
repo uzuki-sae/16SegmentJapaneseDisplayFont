@@ -21,11 +21,14 @@ def read_sheet(image_path, rows, threshold=THRESHOLD):
     glyphs = segment.split_sheet(ink, rows)
     by_band = {}
     for g in glyphs:
-        by_band.setdefault(g.band, []).append(g.box)
-    refs = {band: recognize.row_reference(boxes) for band, boxes in by_band.items()}
+        by_band.setdefault(g.band, []).append(g)
+    cells = {}
+    for row in by_band.values():
+        for g, cell in zip(row, recognize.row_cells([g.box for g in row])):
+            cells[id(g)] = cell
     readings = []
     for g in glyphs:
-        cell = recognize.cell_for(g.box, refs[g.band])
+        cell = cells[id(g)]
         cov = recognize.coverages(ink, cell, theta=theta)
         readings.append(
             Reading(g.char, {s for s, c in cov.items() if c >= threshold}, cell, cov)

@@ -45,6 +45,28 @@ def cell_for(box, reference, min_height_ratio=0.75):
     return (x0, y0, x1, y1)
 
 
+def row_cells(boxes, narrow_ratio=0.75):
+    """1行分の外接矩形（左から順）から、文字ごとの文字枠を決める。
+
+    縦: cell_for と同じ（背の低い字は行の基準を使う）。
+    横: 幅の狭い字（〇 のように枠の一部にだけ描かれた字）は、行の標準幅（幅の中央値）の枠を
+        左右の字の間の空きの中央に置き、インクがはみ出さないようにずらす。
+    """
+    reference = row_reference(boxes)
+    width = int(np.median([x1 - x0 for x0, _, x1, _ in boxes]))
+    cells = []
+    for i, box in enumerate(boxes):
+        x0, y0, x1, y1 = cell_for(box, reference)
+        if x1 - x0 < width * narrow_ratio:
+            left = boxes[i - 1][2] if i > 0 else box[0] - width
+            right = boxes[i + 1][0] if i + 1 < len(boxes) else box[2] + width
+            cx0 = (left + right - width) // 2
+            cx0 = min(max(cx0, box[2] - width), box[0])
+            x0, x1 = cx0, cx0 + width
+        cells.append((x0, y0, x1, y1))
+    return cells
+
+
 def orientation(ink, sigma=2.0, window=5.0):
     """構造テンソルで各画素の画の向き（度, 0〜180, 画像座標で y は下向き）を求める。"""
     f = cv2.GaussianBlur(ink.astype(np.float32), (0, 0), sigma)

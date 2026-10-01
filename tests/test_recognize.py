@@ -58,6 +58,22 @@ class TestCells(unittest.TestCase):
     def test_tall_glyph_uses_own_box(self):
         self.assertEqual(recognize.cell_for((10, 25, 150, 175), (20, 180)), (10, 25, 150, 175))
 
+    def test_narrow_glyph_gets_standard_width_between_neighbours(self):
+        # 〇 のように片側だけに描かれた狭い字は、標準幅の枠を左右の字の間の空きに置く
+        boxes = [(0, 0, 100, 100), (150, 50, 200, 100), (330, 0, 430, 100)]
+        cells = recognize.row_cells(boxes)
+        self.assertEqual(cells[0], (0, 0, 100, 100))
+        self.assertEqual(cells[2], (330, 0, 430, 100))
+        x0, _, x1, _ = cells[1]
+        self.assertEqual(x1 - x0, 100)
+        self.assertEqual(x0, 150)  # 空き 100〜330 の中央なら 165〜265 だが、インク左端 150 を含める
+
+    def test_narrow_glyph_centred_when_ink_allows(self):
+        # 空き 100〜400 の中央 (200〜300) がインク 210〜260 を含むので中央に置く
+        boxes = [(0, 0, 100, 100), (210, 0, 260, 100), (400, 0, 500, 100)]
+        x0, _, x1, _ = recognize.row_cells(boxes)[1]
+        self.assertEqual((x0, x1), (200, 300))
+
     def test_row_reference_is_median_of_tall_glyphs(self):
         boxes = [(0, 10, 9, 150), (0, 20, 9, 160), (0, 14, 9, 170), (0, 80, 9, 90)]
         self.assertEqual(recognize.row_reference(boxes), (14, 160))
