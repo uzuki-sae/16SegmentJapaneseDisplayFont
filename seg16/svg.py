@@ -34,61 +34,57 @@ def _is_diagonal(s):
     return ax != bx and ay != by
 
 
-def _direction_from(node, s, st):
-    """節点 node から、セグメント s の反対側の端へ向かう単位ベクトル（SVG 座標）。"""
-    a, b = SEGMENT_LINES[s]
-    other = b if a == node else a
-    (x1, y1), (x2, y2) = _grid_point(*node, st), _grid_point(*other, st)
-    length = math.hypot(x2 - x1, y2 - y1)
-    return ((x2 - x1) / length, (y2 - y1) / length)
+def _clip(poly, nx, ny, c):
+    """凸多角形 poly を半平面 nx*x + ny*y <= c で切り取る（Sutherland–Hodgman）。"""
+    out = []
+    for p, q in zip(poly, poly[1:] + poly[:1]):
+        fp, fq = nx * p[0] + ny * p[1] - c, nx * q[0] + ny * q[1] - c
+        if fp <= 0:
+            out.append(p)
+        if (fp < 0 < fq) or (fq < 0 < fp):
+            t = fp / (fp - fq)
+            out.append((p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t))
+    return out
 
 
-def _angle_between(u, v):
-    return math.acos(max(-1.0, min(1.0, u[0] * v[0] + u[1] * v[1])))
+def _diagonal_polygon(s, st):
+    """斜めのセグメント: 軸に沿った幅 t の帯と、そのマスの内側の長方形の重なり。
 
-
-def _end_shrink(s, node, st):
-    """セグメント s の端 node をどれだけ縮めるか。
-
-    先端は六角形で、先端から t/2 進んだ所で太さ t になる。
-    - 縦横: 一直線に並ぶ隣や直交する縦横と gap 以上離れる量 (gap + t/2) だけ縮める。
-      中心でも同じで、縦横はなるべく長く残す。
-    - 斜め: 縦横のセグメントは節点の近くまで伸びているとみなし、その帯 (幅 t) から
-      gap 以上離れるまで縮める。縦と斜めのなす角は約34°と狭いので、斜めを多めに縮めて
-      隙間を作る。中心では斜めどうしも、二等分線から gap/2 以上離れるようにする。
+    長方形は、マスを囲む縦横のセグメントの太さ (t/2) と隙間 (gap) の分だけ内側に寄せたもの。
+    先端は隣の縦横と平行（水平・垂直）に切れるので、隣との隙間がどこでも gap になる。
     """
-    t, g = st.thickness, st.gap
-    base = g + t / 2
-    if not _is_diagonal(s):
-        return base
-    u = _direction_from(node, s, st)
-    need = base
-    for o in range(16):
-        if o == s or node not in SEGMENT_LINES[o]:
-            continue
-        phi = _angle_between(u, _direction_from(node, o, st))
-        if _is_diagonal(o):
-            half = phi / 2
-            need = max(need, (g / 2 + (t / 2) * math.cos(half)) / math.sin(half) - t / 2)
-        else:
-            clearance = t / 2 + g
-            tip = clearance / math.sin(phi)  # 先端そのもの
-            body = (clearance + (t / 2) * math.cos(phi)) / math.sin(phi) - t / 2  # 太さが t になる点
-            need = max(need, tip, body)
-    return need
+    (ax, ay), (bx, by) = SEGMENT_LINES[s]
+    (x1, y1), (x2, y2) = _grid_point(ax, ay, st), _grid_point(bx, by, st)
+    inset = st.thickness / 2 + st.gap
+    left, right = min(x1, x2) + inset, max(x1, x2) - inset
+    top, bottom = min(y1, y2) + inset, max(y1, y2) - inset
+    poly = [(left, top), (right, top), (right, bottom), (left, bottom)]
+    length = math.hypot(x2 - x1, y2 - y1)
+    nx, ny = -(y2 - y1) / length, (x2 - x1) / length  # 軸の法線
+    offset = nx * x1 + ny * y1
+    half = st.thickness / 2
+    poly = _clip(poly, nx, ny, offset + half)
+    poly = _clip(poly, -nx, -ny, -(offset - half))
+    return poly
 
 
 def segment_polygon(s, st):
-    """セグメント s の六角形の頂点。[先端A, A側上, B側上, 先端B, B側下, A側下]"""
+    """セグメント s の多角形の頂点。
+
+    縦横: 両端を尖らせた六角形 [先端A, A側上, B側上, 先端B, B側下, A側下]。
+    斜め: 先端を水平・垂直に切った多角形（_diagonal_polygon）。
+    """
+    if _is_diagonal(s):
+        return _diagonal_polygon(s, st)
     a, b = SEGMENT_LINES[s]
     (x1, y1), (x2, y2) = _grid_point(*a, st), _grid_point(*b, st)
     length = math.hypot(x2 - x1, y2 - y1)
     ux, uy = (x2 - x1) / length, (y2 - y1) / length  # 線分方向
     nx, ny = -uy, ux  # 法線
     half = st.thickness / 2
-    shrink_a, shrink_b = _end_shrink(s, a, st), _end_shrink(s, b, st)
-    tip_a = (x1 + ux * shrink_a, y1 + uy * shrink_a)
-    tip_b = (x2 - ux * shrink_b, y2 - uy * shrink_b)
+    shrink = st.gap + half  # 一直線に並ぶ隣・直交する縦横と gap 以上離れる
+    tip_a = (x1 + ux * shrink, y1 + uy * shrink)
+    tip_b = (x2 - ux * shrink, y2 - uy * shrink)
     a_in = (tip_a[0] + ux * half, tip_a[1] + uy * half)
     b_in = (tip_b[0] - ux * half, tip_b[1] - uy * half)
     return [

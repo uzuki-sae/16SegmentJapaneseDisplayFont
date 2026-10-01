@@ -74,15 +74,25 @@ class TestSegmentPolygon(unittest.TestCase):
                         d = polygon_distance(svg.segment_polygon(a, st), svg.segment_polygon(b, st))
                         self.assertGreaterEqual(d, st.gap * 0.99)
 
-    def test_diagonal_is_along_cell_diagonal(self):
+    def test_diagonal_ends_are_cut_parallel_to_neighbours(self):
+        # 斜めの辺は「軸に平行な長辺」か「隣の縦横と平行な（水平・垂直の）切り口」だけ
         st = svg.Style()
-        pts = svg.segment_polygon(0x3, st)
-        (ax, ay), (bx, by) = pts[0], pts[3]  # 両端の尖り
-        self.assertAlmostEqual(
-            math.atan2(by - ay, bx - ax),
-            math.atan2(st.height / 2 - st.margin, st.width / 2 - st.margin),
-            places=6,
-        )
+        axis = math.atan2(st.height / 2 - st.margin, st.width / 2 - st.margin)
+        for s in (0x3, 0x5, 0xA, 0xC):
+            pts = svg.segment_polygon(s, st)
+            kinds = set()
+            for (x0, y0), (x1, y1) in zip(pts, pts[1:] + pts[:1]):
+                a = math.atan2(y1 - y0, x1 - x0) % math.pi
+                if min(a, math.pi - a) < 1e-6:
+                    kinds.add("H")
+                elif abs(a - math.pi / 2) < 1e-6:
+                    kinds.add("V")
+                elif min(abs(a - axis), abs(a - (math.pi - axis))) < 1e-6:
+                    kinds.add("axis")
+                else:
+                    self.fail(f"segment {s:X}: unexpected edge angle {math.degrees(a):.1f}")
+            with self.subTest(segment=s):
+                self.assertEqual(kinds, {"H", "V", "axis"})
 
 
 class TestGlyphSvg(unittest.TestCase):

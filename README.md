@@ -38,7 +38,11 @@ python scripts/evaluate.py data/kansuji_sheet.json  # 手書き画像の読み�
 python scripts/review.py data/katakana_sheet.json -o out/katakana_review.png  # 確認シート（手書きと読み取り結果を並べた PNG）
 python scripts/encode.py                            # PART1: data/*_sheet.json を読み、data/charmap.json を生成
 python scripts/decode.py                            # PART2: svg/<文字>.svg と svg/index.html を生成
+python scripts/build_font.py                        # PART3: font/Seg16-Regular.otf を生成
 ```
+
+フォントは等幅の CFF (OTF)。収録外の文字は全セグメント点灯の `.notdef` で表示される。
+輪郭は SVG と同じセグメント形状から作るので、SVG とフォントの見た目は一致する。
 
 - シート定義 `data/*_sheet.json`: 画像パス `image`、行ごとの文字列 `rows`（`_` は空きマス）、
   読み取り範囲 `crop`（任意）、評価用の正解 `segments`（点灯セグメント番号の列挙。読み取りの回帰確認用）
