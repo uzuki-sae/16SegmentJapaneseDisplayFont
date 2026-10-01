@@ -19,6 +19,7 @@ LICENSE = "This Font Software is licensed under the MIT License."
 LICENSE_URL = "https://opensource.org/license/mit"
 KANSUJI = "〇一二三四五六七八九"
 HIRAGANA_OFFSET = 0x60  # ひらがな = カタカナ - 0x60（ぁ U+3041 〜 ゖ U+3096）
+VARIANTS = {"無": "无"}  # 異体字 {入力する字: 対照表の字}
 
 
 def default_aliases(charmap):
@@ -26,6 +27,7 @@ def default_aliases(charmap):
 
     - アラビア数字 0〜9 と全角数字 ０〜９ → 漢数字 〇〜九
     - ひらがな → 対応するカタカナ
+    - 異体字（VARIANTS。無 → 无）
     対照表に無い字への対応や、対照表に既にある字の上書きは作らない。
     """
     aliases = {}
@@ -35,6 +37,7 @@ def default_aliases(charmap):
     for kata in charmap:
         if "\u30a1" <= kata <= "\u30f6":
             aliases[chr(ord(kata) - HIRAGANA_OFFSET)] = kata
+    aliases.update(VARIANTS)
     return {a: t for a, t in aliases.items() if t in charmap and a not in charmap}
 
 

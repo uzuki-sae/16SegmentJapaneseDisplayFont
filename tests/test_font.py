@@ -7,7 +7,7 @@ from fontTools.ttLib import TTFont
 
 from seg16 import font
 
-CHARMAP = {"一": "0180", "十": "0990", "〇": "0152", "ア": "C410", "ン": "0520"}
+CHARMAP = {"一": "0180", "十": "0990", "〇": "0152", "ア": "C410", "ン": "0520", "无": "C9B1"}
 
 
 class TestAliases(unittest.TestCase):
@@ -18,6 +18,7 @@ class TestAliases(unittest.TestCase):
         self.assertEqual(aliases["１"], "一")  # 全角数字
         self.assertEqual(aliases["あ"], "ア")
         self.assertEqual(aliases["ん"], "ン")
+        self.assertEqual(aliases["無"], "无")  # 異体字
 
     def test_no_alias_for_missing_target(self):
         aliases = font.default_aliases(CHARMAP)
