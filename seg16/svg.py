@@ -29,9 +29,6 @@ def _grid_point(x, y, st):
     )
 
 
-CENTER = (0.5, 0.5)
-
-
 def _is_diagonal(s):
     (ax, ay), (bx, by) = SEGMENT_LINES[s]
     return ax != bx and ay != by
@@ -54,38 +51,30 @@ def _end_shrink(s, node, st):
     """セグメント s の端 node をどれだけ縮めるか。
 
     先端は六角形で、先端から t/2 進んだ所で太さ t になる。
-    - 中心 (最大 8 本が集まる): 隣り合うどの 2 本も gap 以上離れるよう、両方を同じだけ縮める。
-      角度 φ の 2 本では、太さが t になる点の二等分線からの距離
-      (shrink + t/2)·sin(φ/2) − (t/2)·cos(φ/2) ≥ gap/2 から決まる。
-    - 四隅の斜め: 縦横のセグメントは隅の近くまで伸びているとみなし、その帯 (幅 t) から
-      gap 以上離れるまで縮める。
-    - それ以外の縦横: 一直線に並ぶ隣と gap 以上離れる量 (gap + t/2)。
+    - 縦横: 一直線に並ぶ隣や直交する縦横と gap 以上離れる量 (gap + t/2) だけ縮める。
+      中心でも同じで、縦横はなるべく長く残す。
+    - 斜め: 縦横のセグメントは節点の近くまで伸びているとみなし、その帯 (幅 t) から
+      gap 以上離れるまで縮める。縦と斜めのなす角は約34°と狭いので、斜めを多めに縮めて
+      隙間を作る。中心では斜めどうしも、二等分線から gap/2 以上離れるようにする。
     """
     t, g = st.thickness, st.gap
     base = g + t / 2
-    others = [
-        o for o in range(16)
-        if o != s and node in SEGMENT_LINES[o]
-    ]
-    u = _direction_from(node, s, st)
-    if node == CENTER:
-        need = base
-        for o in others:
-            phi = _angle_between(u, _direction_from(node, o, st))
-            half = phi / 2
-            need = max(need, (g / 2 + (t / 2) * math.cos(half)) / math.sin(half) - t / 2)
-        return need
     if not _is_diagonal(s):
         return base
+    u = _direction_from(node, s, st)
     need = base
-    for o in others:
-        if _is_diagonal(o):
+    for o in range(16):
+        if o == s or node not in SEGMENT_LINES[o]:
             continue
         phi = _angle_between(u, _direction_from(node, o, st))
-        clearance = t / 2 + g
-        tip = clearance / math.sin(phi)  # 先端そのもの
-        body = (clearance + (t / 2) * math.cos(phi)) / math.sin(phi) - t / 2  # 太さが t になる点
-        need = max(need, tip, body)
+        if _is_diagonal(o):
+            half = phi / 2
+            need = max(need, (g / 2 + (t / 2) * math.cos(half)) / math.sin(half) - t / 2)
+        else:
+            clearance = t / 2 + g
+            tip = clearance / math.sin(phi)  # 先端そのもの
+            body = (clearance + (t / 2) * math.cos(phi)) / math.sin(phi) - t / 2  # 太さが t になる点
+            need = max(need, tip, body)
     return need
 
 
