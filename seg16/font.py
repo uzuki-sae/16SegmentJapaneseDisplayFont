@@ -4,6 +4,9 @@
 SVG 座標（y が下向き）を、フォント座標（y が上向き、ベースライン y=0）に変換する。
 """
 
+import unicodedata
+
+from fontTools.feaLib.builder import addOpenTypeFeaturesFromString
 from fontTools.fontBuilder import FontBuilder
 from fontTools.pens.t2CharStringPen import T2CharStringPen
 
@@ -20,6 +23,32 @@ LICENSE_URL = "https://opensource.org/license/mit"
 KANSUJI = "〇一二三四五六七八九"
 HIRAGANA_OFFSET = 0x60  # ひらがな = カタカナ - 0x60（ぁ U+3041 〜 ゖ U+3096）
 VARIANTS = {"無": "无"}  # 異体字 {入力する字: 対照表の字}
+DAKUTEN, HANDAKUTEN = "゛", "゜"
+# 結合用・半角の濁点・半濁点 {入力する字: 対照表の字}
+MARK_ALIASES = {"\u3099": DAKUTEN, "\uff9e": DAKUTEN, "\u309a": HANDAKUTEN, "\uff9f": HANDAKUTEN}
+_COMBINING = {"\u3099": DAKUTEN, "\u309a": HANDAKUTEN}
+
+
+def _katakana(ch):
+    return chr(ord(ch) + HIRAGANA_OFFSET) if "\u3041" <= ch <= "\u3096" else ch
+
+
+def voiced_sequences(charmap):
+    """濁音・半濁音の字 → (元の字, 濁点 or 半濁点)。ひらがなの元の字はカタカナにする。
+
+    Unicode の正準分解（NFD）が「かな＋結合用の濁点・半濁点」になる字（ガ、が、パ、ヴ など）のうち、
+    元の字と記号が両方とも対照表にあるものだけを返す。
+    """
+    result = {}
+    for code in list(range(0x3041, 0x3097)) + list(range(0x30A1, 0x30FB)):
+        ch = chr(code)
+        nfd = unicodedata.normalize("NFD", ch)
+        if len(nfd) != 2 or nfd[1] not in _COMBINING:
+            continue
+        base, mark = _katakana(nfd[0]), _COMBINING[nfd[1]]
+        if base in charmap and mark in charmap:
+            result[ch] = (base, mark)
+    return result
 
 
 def default_aliases(charmap):
@@ -38,6 +67,7 @@ def default_aliases(charmap):
         if "\u30a1" <= kata <= "\u30f6":
             aliases[chr(ord(kata) - HIRAGANA_OFFSET)] = kata
     aliases.update(VARIANTS)
+    aliases.update(MARK_ALIASES)
     return {a: t for a, t in aliases.items() if t in charmap and a not in charmap}
 
 
@@ -86,18 +116,23 @@ def build_font(charmap, path, st=None, family=FAMILY, version="0.1", aliases=Non
     width = round(st.width * SCALE)
     ascent = round(st.height * SCALE) - DESCENT
 
-    names = {ch: glyph_name(ch) for ch in charmap}
-    order = [".notdef", "space"] + [names[ch] for ch in charmap]
+    voiced = voiced_sequences(charmap)
+    names = {ch: glyph_name(ch) for ch in list(charmap) + list(voiced)}
+    order = [".notdef", "space"] + [names[ch] for ch in charmap] + [names[ch] for ch in voiced]
     charstrings = {
         ".notdef": _charstring(glyph_contours(0xFFFF, st), width),
         "space": _charstring([], width),
     }
     for ch, hexcode in charmap.items():
         charstrings[names[ch]] = _charstring(glyph_contours(from_hex(hexcode), st), width)
+    # 濁音・半濁音の字は、置き換え（ccmp）が働かない環境のために、元の字と記号を重ねた字形も持たせる
+    for ch, (base, mark) in voiced.items():
+        value = from_hex(charmap[base]) | from_hex(charmap[mark])
+        charstrings[names[ch]] = _charstring(glyph_contours(value, st), width)
 
     fb = FontBuilder(UNITS_PER_EM, isTTF=False)
     fb.setupGlyphOrder(order)
-    cmap = {ord(" "): "space", **{ord(ch): names[ch] for ch in charmap}}
+    cmap = {ord(" "): "space", **{ord(ch): names[ch] for ch in list(charmap) + list(voiced)}}
     cmap.update({ord(a): names[t] for a, t in aliases.items()})
     fb.setupCharacterMap(cmap)
     fb.setupCFF(
@@ -128,4 +163,11 @@ def build_font(charmap, path, st=None, family=FAMILY, version="0.1", aliases=Non
         fsType=0,
     )
     fb.setupPost(isFixedPitch=1)
+    if voiced:
+        # 濁音・半濁音の字を「元の字＋記号」の 2 マスに分ける
+        rules = "\n".join(
+            f"    sub {names[ch]} by {names[base]} {names[mark]};"
+            for ch, (base, mark) in voiced.items()
+        )
+        addOpenTypeFeaturesFromString(fb.font, f"feature ccmp {{\n{rules}\n}} ccmp;\n")
     fb.save(path)

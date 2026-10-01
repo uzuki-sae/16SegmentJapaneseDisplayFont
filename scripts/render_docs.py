@@ -21,11 +21,14 @@ from seg16 import codec, svg  # noqa: E402
 FONT_PATH = Path.home() / "Library" / "Fonts" / "ipaexg.ttf"
 ON, OFF, INK, SUB = (20, 20, 20), (228, 228, 228), (30, 30, 30), (120, 120, 120)
 NUMERALS = "〇一二三四五六七八九十百千万円"
+MARKS = "゛゜"
+LABELS = {"゛": "濁点", "゜": "半濁点"}  # 字そのものでは読みにくいものの表示名
 # 本来の字形とは別の形で表している字（対照リストに ※ を付けて注記する）
 NOTES = {
     "ク": "ク は、ひらがなの「く」の形で表しています",
     "キ": "キ は、「木」の篆書の形で代用しています",
     "无": "无 は「無」の異体字です（フォントでは「無」を入力しても表示されます）",
+    "゛": "濁点・半濁点の付いた字（ガ・パ など）は、フォントでは「カ＋濁点」「ハ＋半濁点」の 2 マスで表示されます",
 }
 
 
@@ -61,8 +64,9 @@ def render_segments(path):
 def groups(charmap):
     kana = [c for c in charmap if "゠" <= c <= "ヿ"]
     nums = [c for c in charmap if c in NUMERALS]
-    kanji = [c for c in charmap if c not in kana and c not in nums]
-    return [("数字・単位", nums), ("カタカナ", kana), ("漢字", kanji)]
+    marks = [c for c in charmap if c in MARKS]
+    kanji = [c for c in charmap if c not in kana and c not in nums and c not in marks]
+    return [("数字・単位", nums), ("カタカナ", kana), ("漢字", kanji), ("記号", marks)]
 
 
 def render_charmap(charmap, path, per_row=11, scale=0.55):
@@ -86,7 +90,7 @@ def render_charmap(charmap, path, per_row=11, scale=0.55):
             r, k = divmod(i, per_row)
             x0, y0 = 15 + k * cw, y + r * ch
             draw_glyph(d, codec.int_to_segments(codec.from_hex(charmap[c])), x0 + 13, y0, scale, st)
-            label = f"{c}※" if c in NOTES else c
+            label = LABELS.get(c, c) + ("※" if c in NOTES else "")
             d.text((x0 + cw / 2, y0 + gh + 6), label, font=f_char, fill=INK, anchor="mt")
             d.text((x0 + cw / 2, y0 + gh + 32), charmap[c], font=f_hex, fill=SUB, anchor="mt")
         y += ((len(chars) + per_row - 1) // per_row) * ch + 16

@@ -7,7 +7,23 @@ from fontTools.ttLib import TTFont
 
 from seg16 import font
 
-CHARMAP = {"一": "0180", "十": "0990", "〇": "0152", "ア": "C410", "ン": "0520", "无": "C9B1"}
+CHARMAP = {
+    "一": "0180", "十": "0990", "〇": "0152", "ア": "C410", "ン": "0520", "无": "C9B1",
+    "カ": "05A4", "ハ": "0A24", "ウ": "0985", "゛": "2800", "゜": "A900",
+}
+
+
+class TestVoiced(unittest.TestCase):
+    def test_voiced_kana_split_into_base_and_mark(self):
+        seq = font.voiced_sequences(CHARMAP)
+        self.assertEqual(seq["ガ"], ("カ", "゛"))
+        self.assertEqual(seq["が"], ("カ", "゛"))  # ひらがなもカタカナの字形で
+        self.assertEqual(seq["パ"], ("ハ", "゜"))
+        self.assertEqual(seq["ヴ"], ("ウ", "゛"))
+        self.assertNotIn("ギ", seq)  # キ が CHARMAP に無い
+
+    def test_no_voiced_without_marks(self):
+        self.assertEqual(font.voiced_sequences({"カ": "05A4"}), {})
 
 
 class TestAliases(unittest.TestCase):
@@ -23,7 +39,7 @@ class TestAliases(unittest.TestCase):
     def test_no_alias_for_missing_target(self):
         aliases = font.default_aliases(CHARMAP)
         self.assertNotIn("2", aliases)  # 二 は CHARMAP に無い
-        self.assertNotIn("か", aliases)
+        self.assertNotIn("き", aliases)
 
 
 class TestBuildFont(unittest.TestCase):
@@ -52,6 +68,25 @@ class TestBuildFont(unittest.TestCase):
         self.assertIn("uzuki-sae", name.getDebugName(0))
         self.assertIn("MIT License", name.getDebugName(13))
         self.assertEqual(name.getDebugName(14), "https://opensource.org/license/mit")
+
+    def test_voiced_kana_are_split_by_ccmp(self):
+        cmap = self.font.getBestCmap()
+        gsub = self.font["GSUB"].table
+        features = [f.FeatureTag for f in gsub.FeatureList.FeatureRecord]
+        self.assertIn("ccmp", features)
+        mapping = {}
+        for lookup in gsub.LookupList.Lookup:
+            for sub in lookup.SubTable:
+                mapping.update(getattr(sub, "mapping", {}))
+        self.assertEqual(mapping[cmap[ord("ガ")]], [cmap[ord("カ")], cmap[ord("゛")]])
+        self.assertEqual(mapping[cmap[ord("ぱ")]], [cmap[ord("ハ")], cmap[ord("゜")]])
+
+    def test_combining_and_halfwidth_marks_share_glyphs(self):
+        cmap = self.font.getBestCmap()
+        self.assertEqual(cmap[0x3099], cmap[ord("゛")])
+        self.assertEqual(cmap[0xFF9E], cmap[ord("゛")])
+        self.assertEqual(cmap[0x309A], cmap[ord("゜")])
+        self.assertEqual(cmap[0xFF9F], cmap[ord("゜")])
 
     def test_aliases_share_glyphs(self):
         cmap = self.font.getBestCmap()

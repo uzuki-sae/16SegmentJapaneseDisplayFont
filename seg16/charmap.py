@@ -34,9 +34,17 @@ def svg_filename(ch):
     return f"{ch}.svg"
 
 
+# 同じ字形でよい組み合わせ（重なりとして扱わない）
+SAME_LOOKING = [{"秒", "゛"}]
+
+
 def collisions(table):
-    """同じ点灯パターンを持つ文字の組 {16進4桁: [文字, ...]}。"""
+    """同じ点灯パターンを持つ文字の組 {16進4桁: [文字, ...]}。SAME_LOOKING の組は除く。"""
     by_code = {}
     for ch, code in table.items():
         by_code.setdefault(code, []).append(ch)
-    return {code: chars for code, chars in by_code.items() if len(chars) > 1}
+    return {
+        code: chars
+        for code, chars in by_code.items()
+        if len(chars) > 1 and set(chars) not in SAME_LOOKING
+    }
