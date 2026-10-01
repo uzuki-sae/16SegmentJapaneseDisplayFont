@@ -46,6 +46,11 @@ class TestBuildFont(unittest.TestCase):
         for ch in list(CHARMAP) + [" "]:
             self.assertIn(ord(ch), cmap)
 
+    def test_license_in_name_table(self):
+        name = self.font["name"]
+        self.assertIn("CC0", name.getDebugName(13))
+        self.assertEqual(name.getDebugName(14), "https://creativecommons.org/publicdomain/zero/1.0/")
+
     def test_aliases_share_glyphs(self):
         cmap = self.font.getBestCmap()
         self.assertEqual(cmap[ord("1")], cmap[ord("一")])

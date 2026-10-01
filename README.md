@@ -178,3 +178,9 @@ python scripts/encode.py                                         # data/*_sheet.
 | `seg16/font.py` | OpenType フォントの生成 |
 | `scripts/` | 上記を呼び出すコマンド |
 | `tests/` | テスト（`python -m unittest`） |
+
+## ライセンス
+
+フォント・プログラム・画像を含むリポジトリ全体を
+[CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/deed.ja)（パブリックドメイン提供）で公開します。
+利用・改変・再配布・商用利用に条件はなく、著作権表示も不要です。条文は [LICENSE](LICENSE) にあります。

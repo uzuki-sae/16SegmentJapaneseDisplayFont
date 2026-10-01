@@ -14,6 +14,8 @@ UNITS_PER_EM = 1000
 SCALE = 6.5  # SVG 1 単位 → フォント単位。Style の 100x140 が 650x910 になる
 DESCENT = 120  # 字の下端をベースラインからどれだけ下げるか
 FAMILY = "Seg16"
+LICENSE = "CC0 1.0 Universal (public domain dedication)"
+LICENSE_URL = "https://creativecommons.org/publicdomain/zero/1.0/"
 KANSUJI = "〇一二三四五六七八九"
 HIRAGANA_OFFSET = 0x60  # ひらがな = カタカナ - 0x60（ぁ U+3041 〜 ゖ U+3096）
 
@@ -107,6 +109,8 @@ def build_font(charmap, path, st=None, family=FAMILY, version="0.1", aliases=Non
             "fullName": f"{family} Regular",
             "psName": f"{family}-Regular",
             "version": f"Version {version}",
+            "licenseDescription": LICENSE,
+            "licenseInfoURL": LICENSE_URL,
         }
     )
     fb.setupOS2(
