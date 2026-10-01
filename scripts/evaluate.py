@@ -33,7 +33,7 @@ def main():
     args = ap.parse_args()
 
     truth = json.loads(Path(args.truth).read_text())
-    readings = pipeline.read_sheet(ROOT / truth["image"], truth["rows"], truth.get("crop"))
+    readings = pipeline.read_sheet_def(truth, ROOT)
 
     debug = Image.open(ROOT / truth["image"]).convert("RGB") if args.debug else None
     ok = 0

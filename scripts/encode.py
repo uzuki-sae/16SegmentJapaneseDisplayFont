@@ -30,7 +30,7 @@ def main():
     readings = {}
     for sheet_path in sheets:
         sheet = json.loads(Path(sheet_path).read_text())
-        for r in pipeline.read_sheet(ROOT / sheet["image"], sheet["rows"], sheet.get("crop")):
+        for r in pipeline.read_sheet_def(sheet, ROOT):
             readings[r.char] = codec.to_hex(codec.segments_to_int(r.segments))
         print(f"{sheet_path}: 読み取り済み")
 

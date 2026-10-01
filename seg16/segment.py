@@ -125,9 +125,17 @@ def partition_components(intervals, count, width):
 EMPTY = "_"  # 表の空きマス
 
 
-def split_sheet(ink, rows):
-    """rows: 行ごとの文字列（その行に並ぶ文字を左から順に。"_" は空きマス）。"""
-    bands = split_by_largest_gaps(ink.sum(axis=1), len(rows))
+def split_sheet(ink, rows, bands=None):
+    """rows: 行ごとの文字列（その行に並ぶ文字を左から順に。"_" は空きマス）。
+
+    bands: 行ごとの縦の範囲 [(y0, y1), ...]。省略すると自動で分ける。
+    隣の行と画を共有する字（縦に続けて描いた 上・下）は範囲を重ねて指定する。
+    """
+    if bands is None:
+        bands = split_by_largest_gaps(ink.sum(axis=1), len(rows))
+    elif len(bands) != len(rows):
+        raise ValueError(f"bands ({len(bands)}) と rows ({len(rows)}) の数が違う")
+    bands = [tuple(b) for b in bands]
     # 文字の標準幅の目安: 行の高さの中央値の 0.8 倍
     width = 0.8 * float(np.median([y1 - y0 for y0, y1 in bands]))
     glyphs = []

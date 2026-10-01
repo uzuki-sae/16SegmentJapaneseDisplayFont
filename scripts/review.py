@@ -70,7 +70,7 @@ def main():
 
     sheet = json.loads(Path(args.sheet).read_text())
     src = Image.open(ROOT / sheet["image"])
-    readings = pipeline.read_sheet(ROOT / sheet["image"], sheet["rows"], sheet.get("crop"))
+    readings = pipeline.read_sheet_def(sheet, ROOT)
     tiles = [tile(src, r, i + 1) for i, r in enumerate(readings)]
 
     tw = max(t.width for t in tiles)

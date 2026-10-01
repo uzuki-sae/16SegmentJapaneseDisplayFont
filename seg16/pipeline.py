@@ -31,8 +31,10 @@ class Reading:
         return reasons
 
 
-def read_sheet(image_path, rows, crop=None, threshold=THRESHOLD):
-    """crop: (x0, y0, x1, y1) を指定すると、その範囲外のインクを無視する（見出しや罫線を除く）。"""
+def read_sheet(image_path, rows, crop=None, bands=None, threshold=THRESHOLD):
+    """crop: (x0, y0, x1, y1) を指定すると、その範囲外のインクを無視する（見出しや罫線を除く）。
+    bands: 行ごとの縦の範囲（segment.split_sheet を参照）。
+    """
     ink = segment.hysteresis_ink(segment.load_gray(image_path))
     if crop:
         x0, y0, x1, y1 = crop
@@ -41,7 +43,7 @@ def read_sheet(image_path, rows, crop=None, threshold=THRESHOLD):
         ink &= keep
     theta = recognize.orientation(ink)
     width = fit.stroke_width(ink)
-    glyphs = segment.split_sheet(ink, rows)
+    glyphs = segment.split_sheet(ink, rows, bands)
     by_band = {}
     for g in glyphs:
         by_band.setdefault(g.band, []).append(g)
@@ -68,3 +70,12 @@ def read_sheet(image_path, rows, crop=None, threshold=THRESHOLD):
             )
         )
     return readings
+
+
+def read_sheet_def(sheet, root="."):
+    """シート定義（data/*_sheet.json の中身）を読み取る。画像パスは root からの相対パス。"""
+    from pathlib import Path
+
+    return read_sheet(
+        Path(root) / sheet["image"], sheet["rows"], sheet.get("crop"), sheet.get("bands")
+    )
