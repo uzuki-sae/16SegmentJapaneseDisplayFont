@@ -27,6 +27,10 @@ def main():
     args = ap.parse_args()
 
     sheets = args.sheets or sorted(str(p) for p in (ROOT / "data").glob("*_sheet.json"))
+    if not sheets:
+        # シートが無いまま進むと、上書き表だけの対照表で data/charmap.json を消してしまう
+        print("シート定義 (data/*_sheet.json) がありません。", file=sys.stderr)
+        return 2
     readings = {}
     for sheet_path in sheets:
         sheet = json.loads(Path(sheet_path).read_text())

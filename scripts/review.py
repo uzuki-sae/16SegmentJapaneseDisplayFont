@@ -1,6 +1,6 @@
 """読み取り結果の確認シート（PNG）を作る。
 
-使い方: python scripts/review.py data/katakana_sheet.json -o out/katakana_review.png
+使い方: python scripts/review.py data/my_sheet.json -o out/review.png
 各文字について、左に元の手書き（推定した文字枠を青で表示）、右に読み取ったセグメントを描く。
 確認が必要そうな字は赤枠で囲み、理由を書く。
 """
