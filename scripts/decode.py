@@ -5,6 +5,7 @@
 """
 
 import argparse
+import html
 import json
 import sys
 from pathlib import Path
@@ -12,6 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from seg16 import charmap as charmap_mod  # noqa: E402
 from seg16 import codec, svg  # noqa: E402
 
 
@@ -27,10 +29,10 @@ def main():
     cards = []
     for ch, hexcode in charmap.items():
         value = codec.from_hex(hexcode)
-        (outdir / f"{ch}.svg").write_text(svg.glyph_svg(value))
+        (outdir / charmap_mod.svg_filename(ch)).write_text(svg.glyph_svg(value))
         cards.append(
             f'<figure>{svg.glyph_svg(value, ghost=True)}'
-            f"<figcaption>{ch} {hexcode}</figcaption></figure>"
+            f"<figcaption>{html.escape(ch)} {hexcode}</figcaption></figure>"
         )
     (outdir / "index.html").write_text(
         "<!doctype html><meta charset='utf-8'><title>16seg</title>"

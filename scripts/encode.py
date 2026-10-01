@@ -39,8 +39,9 @@ def main():
     table = charmap.apply_overrides(readings, overrides)
     for ch in overrides:
         before = readings.get(ch, "----")
-        if before != table[ch]:
-            print(f"  上書き {ch}: {before} → {table[ch]}")
+        after = table.get(ch, "削除")
+        if before != after:
+            print(f"  上書き {ch}: {before} → {after}")
 
     out = Path(args.output)
     out.write_text(json.dumps(table, ensure_ascii=False, indent=2) + "\n")
