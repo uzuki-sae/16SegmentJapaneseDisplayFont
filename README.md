@@ -15,3 +15,30 @@
 ##PART3 OTF化
 各文字のSVGファイルからフォントファイルOTFを生成
 
+## セグメント番号
+
+手書きの配置図: `samples/segment_layout.jpg`。5×5 行列の位置は次のとおり（`.` はマスク）。
+
+```
+.  0  .  1  .
+2  3  4  5  6
+.  7  .  8  .
+9  A  B  C  D
+.  E  .  F  .
+```
+
+16bit 化するときは、セグメント 0 を最上位ビット（`0x8000`）、F を最下位ビット（`0x0001`）にする。例: 一 = 7, 8 → `0180`。
+
+## 使い方
+
+```bash
+. ~/pydev/bin/activate
+python -m unittest                                  # テスト
+python scripts/evaluate.py data/kansuji_truth.json  # 手書き画像の読み取り結果を正解データと照合
+python scripts/encode.py data/kansuji_truth.json    # PART1: data/charmap.json を生成
+python scripts/decode.py                            # PART2: svg/<文字>.svg と svg/index.html を生成
+```
+
+シート定義 JSON（例: `data/kansuji_truth.json`）には、画像パス `image`、行ごとの文字列 `rows`、
+評価用の正解 `segments`（点灯セグメント番号の列挙）を書く。
+
