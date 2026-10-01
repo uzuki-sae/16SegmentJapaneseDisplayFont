@@ -29,19 +29,77 @@ def _grid_point(x, y, st):
     )
 
 
+CENTER = (0.5, 0.5)
+
+
+def _is_diagonal(s):
+    (ax, ay), (bx, by) = SEGMENT_LINES[s]
+    return ax != bx and ay != by
+
+
+def _direction_from(node, s, st):
+    """節点 node から、セグメント s の反対側の端へ向かう単位ベクトル（SVG 座標）。"""
+    a, b = SEGMENT_LINES[s]
+    other = b if a == node else a
+    (x1, y1), (x2, y2) = _grid_point(*node, st), _grid_point(*other, st)
+    length = math.hypot(x2 - x1, y2 - y1)
+    return ((x2 - x1) / length, (y2 - y1) / length)
+
+
+def _angle_between(u, v):
+    return math.acos(max(-1.0, min(1.0, u[0] * v[0] + u[1] * v[1])))
+
+
+def _end_shrink(s, node, st):
+    """セグメント s の端 node をどれだけ縮めるか。
+
+    先端は六角形で、先端から t/2 進んだ所で太さ t になる。
+    - 中心 (最大 8 本が集まる): 隣り合うどの 2 本も gap 以上離れるよう、両方を同じだけ縮める。
+      角度 φ の 2 本では、太さが t になる点の二等分線からの距離
+      (shrink + t/2)·sin(φ/2) − (t/2)·cos(φ/2) ≥ gap/2 から決まる。
+    - 四隅の斜め: 縦横のセグメントは隅の近くまで伸びているとみなし、その帯 (幅 t) から
+      gap 以上離れるまで縮める。
+    - それ以外の縦横: 一直線に並ぶ隣と gap 以上離れる量 (gap + t/2)。
+    """
+    t, g = st.thickness, st.gap
+    base = g + t / 2
+    others = [
+        o for o in range(16)
+        if o != s and node in SEGMENT_LINES[o]
+    ]
+    u = _direction_from(node, s, st)
+    if node == CENTER:
+        need = base
+        for o in others:
+            phi = _angle_between(u, _direction_from(node, o, st))
+            half = phi / 2
+            need = max(need, (g / 2 + (t / 2) * math.cos(half)) / math.sin(half) - t / 2)
+        return need
+    if not _is_diagonal(s):
+        return base
+    need = base
+    for o in others:
+        if _is_diagonal(o):
+            continue
+        phi = _angle_between(u, _direction_from(node, o, st))
+        clearance = t / 2 + g
+        tip = clearance / math.sin(phi)  # 先端そのもの
+        body = (clearance + (t / 2) * math.cos(phi)) / math.sin(phi) - t / 2  # 太さが t になる点
+        need = max(need, tip, body)
+    return need
+
+
 def segment_polygon(s, st):
     """セグメント s の六角形の頂点。[先端A, A側上, B側上, 先端B, B側下, A側下]"""
-    (ax, ay), (bx, by) = SEGMENT_LINES[s]
-    (x1, y1), (x2, y2) = _grid_point(ax, ay, st), _grid_point(bx, by, st)
+    a, b = SEGMENT_LINES[s]
+    (x1, y1), (x2, y2) = _grid_point(*a, st), _grid_point(*b, st)
     length = math.hypot(x2 - x1, y2 - y1)
     ux, uy = (x2 - x1) / length, (y2 - y1) / length  # 線分方向
     nx, ny = -uy, ux  # 法線
     half = st.thickness / 2
-    diagonal = ax != bx and ay != by
-    # 斜めは端で縦横のセグメントと重なりやすいので、多めに縮める
-    shrink = st.gap + (st.thickness * 1.2 if diagonal else half)
-    tip_a = (x1 + ux * shrink, y1 + uy * shrink)
-    tip_b = (x2 - ux * shrink, y2 - uy * shrink)
+    shrink_a, shrink_b = _end_shrink(s, a, st), _end_shrink(s, b, st)
+    tip_a = (x1 + ux * shrink_a, y1 + uy * shrink_a)
+    tip_b = (x2 - ux * shrink_b, y2 - uy * shrink_b)
     a_in = (tip_a[0] + ux * half, tip_a[1] + uy * half)
     b_in = (tip_b[0] - ux * half, tip_b[1] - uy * half)
     return [
