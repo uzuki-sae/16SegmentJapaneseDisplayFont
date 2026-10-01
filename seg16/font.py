@@ -15,8 +15,11 @@ SCALE = 6.5  # SVG 1 単位 → フォント単位。Style の 100x140 が 650x9
 DESCENT = 120  # 字の下端をベースラインからどれだけ下げるか
 FAMILY = "Seg16"
 COPYRIGHT = "Copyright (c) 2026 uzuki-sae"
-LICENSE = "This Font Software is licensed under the MIT License."
-LICENSE_URL = "https://opensource.org/license/mit"
+LICENSE = (
+    "This font is licensed under CC BY-NC 4.0 "
+    "(Creative Commons Attribution-NonCommercial 4.0 International)."
+)
+LICENSE_URL = "https://creativecommons.org/licenses/by-nc/4.0/"
 KANSUJI = "〇一二三四五六七八九"
 HIRAGANA_OFFSET = 0x60  # ひらがな = カタカナ - 0x60（ぁ U+3041 〜 ゖ U+3096）
 VARIANTS = {"無": "无"}  # 異体字 {入力する字: 対照表の字}
