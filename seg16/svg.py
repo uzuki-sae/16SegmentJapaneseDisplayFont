@@ -16,7 +16,8 @@ class Style:
     height: float = 140.0
     margin: float = 8.0  # 外枠から格子線までの余白
     thickness: float = 10.0
-    gap: float = 2.5  # 隣り合うセグメントの間の隙間
+    gap: float = 1.0  # 隣り合う縦横セグメントの間の隙間
+    diagonal_gap: float = 6.0  # 斜めセグメントと周りのセグメントの間の隙間
     on_color: str = "#111111"
     ghost_color: str = "#e6e6e6"
 
@@ -50,12 +51,12 @@ def _clip(poly, nx, ny, c):
 def _diagonal_polygon(s, st):
     """斜めのセグメント: 軸に沿った幅 t の帯と、そのマスの内側の長方形の重なり。
 
-    長方形は、マスを囲む縦横のセグメントの太さ (t/2) と隙間 (gap) の分だけ内側に寄せたもの。
-    先端は隣の縦横と平行（水平・垂直）に切れるので、隣との隙間がどこでも gap になる。
+    長方形は、マスを囲む縦横のセグメントの太さ (t/2) と隙間 (diagonal_gap) の分だけ内側に寄せたもの。
+    先端は隣の縦横と平行（水平・垂直）に切れるので、隣との隙間がどこでも diagonal_gap になる。
     """
     (ax, ay), (bx, by) = SEGMENT_LINES[s]
     (x1, y1), (x2, y2) = _grid_point(ax, ay, st), _grid_point(bx, by, st)
-    inset = st.thickness / 2 + st.gap
+    inset = st.thickness / 2 + st.diagonal_gap
     left, right = min(x1, x2) + inset, max(x1, x2) - inset
     top, bottom = min(y1, y2) + inset, max(y1, y2) - inset
     poly = [(left, top), (right, top), (right, bottom), (left, bottom)]

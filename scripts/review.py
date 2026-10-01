@@ -19,7 +19,7 @@ from seg16 import codec, pipeline, svg  # noqa: E402
 
 FONT_PATH = Path.home() / "Library" / "Fonts" / "ipaexg.ttf"
 TILE_H = 150
-GLYPH = svg.Style(width=80, height=112, margin=6, thickness=8, gap=2)
+GLYPH = svg.Style(width=80, height=112, margin=6, thickness=8, gap=0.8, diagonal_gap=4.8)
 
 
 def font(size):

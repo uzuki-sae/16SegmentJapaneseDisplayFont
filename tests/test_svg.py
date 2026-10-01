@@ -74,6 +74,17 @@ class TestSegmentPolygon(unittest.TestCase):
                         d = polygon_distance(svg.segment_polygon(a, st), svg.segment_polygon(b, st))
                         self.assertGreaterEqual(d, st.gap * 0.99)
 
+    def test_diagonals_keep_wider_gap_from_neighbours(self):
+        st = svg.Style()
+        self.assertGreater(st.diagonal_gap, st.gap)
+        for d in (0x3, 0x5, 0xA, 0xC):
+            for o in range(16):
+                if o == d:
+                    continue
+                with self.subTest(diagonal=d, other=o):
+                    dist = polygon_distance(svg.segment_polygon(d, st), svg.segment_polygon(o, st))
+                    self.assertGreaterEqual(dist, st.diagonal_gap * 0.99)
+
     def test_diagonal_ends_are_cut_parallel_to_neighbours(self):
         # 斜めの辺は「軸に平行な長辺」か「隣の縦横と平行な（水平・垂直の）切り口」だけ
         st = svg.Style()
