@@ -35,7 +35,7 @@ def svg_filename(ch):
 
 
 # 同じ字形でよい組み合わせ（重なりとして扱わない）
-SAME_LOOKING = [{"秒", "゛"}]
+SAME_LOOKING = [{"秒", "゛"}, {"〇", "。"}]
 
 
 def collisions(table):
