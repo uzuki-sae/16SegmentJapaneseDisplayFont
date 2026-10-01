@@ -55,6 +55,7 @@ def default_aliases(charmap):
     """別の文字コードから同じ字形を出すための対応 {別名の文字: 対照表の文字}。
 
     - アラビア数字 0〜9 と全角数字 ０〜９ → 漢数字 〇〜九
+      （アラビア数字に独自の字形がある場合、全角数字はそちらに合わせる。例: 0 → ０）
     - ひらがな → 対応するカタカナ
     - 異体字（VARIANTS。無 → 无）
     対照表に無い字への対応や、対照表に既にある字の上書きは作らない。
@@ -62,7 +63,7 @@ def default_aliases(charmap):
     aliases = {}
     for i, kan in enumerate(KANSUJI):
         aliases[str(i)] = kan
-        aliases[chr(ord("０") + i)] = kan
+        aliases[chr(ord("０") + i)] = str(i) if str(i) in charmap else kan
     for kata in charmap:
         if "\u30a1" <= kata <= "\u30f6":
             aliases[chr(ord(kata) - HIRAGANA_OFFSET)] = kata

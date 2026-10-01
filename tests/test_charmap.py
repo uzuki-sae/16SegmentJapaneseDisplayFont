@@ -36,6 +36,8 @@ class TestCharmap(unittest.TestCase):
     def test_same_looking_pair_is_not_a_collision(self):
         # 濁点 ゛ と 秒 は同じ字形でよい組み合わせ
         self.assertEqual(charmap.collisions({"秒": "2800", "゛": "2800"}), {})
+        # 句点 。 と 〇 も同じ字形でよい
+        self.assertEqual(charmap.collisions({"〇": "0152", "。": "0152"}), {})
 
 
 if __name__ == "__main__":

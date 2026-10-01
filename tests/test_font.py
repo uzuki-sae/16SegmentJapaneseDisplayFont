@@ -36,6 +36,13 @@ class TestAliases(unittest.TestCase):
         self.assertEqual(aliases["ん"], "ン")
         self.assertEqual(aliases["無"], "无")  # 異体字
 
+    def test_own_zero_glyph_is_used_for_digit_zero(self):
+        # 0 に独自の字形があれば、0 と ０ はその字形。1〜9 は漢数字のまま
+        aliases = font.default_aliases({**CHARMAP, "0": "A852"})
+        self.assertNotIn("0", aliases)
+        self.assertEqual(aliases["０"], "0")
+        self.assertEqual(aliases["1"], "一")
+
     def test_no_alias_for_missing_target(self):
         aliases = font.default_aliases(CHARMAP)
         self.assertNotIn("2", aliases)  # 二 は CHARMAP に無い
