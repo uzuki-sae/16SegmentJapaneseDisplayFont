@@ -1,8 +1,11 @@
 """PART1: 手書きシート画像を読み取り、文字 → 16進4桁 の対照表を作る。
 
-使い方: python scripts/encode.py data/kansuji_truth.json [...] -o data/charmap.json
-シート定義 JSON には "image"（画像パス）と "rows"（行ごとの文字列）が必要。
-既存の出力ファイルがあれば、同じ文字は上書きし、それ以外は残す。
+使い方: python scripts/encode.py [data/*_sheet.json ...] [-o data/charmap.json]
+シート定義 JSON には "image"（画像パス）と "rows"（行ごとの文字列。"_" は空きマス）、
+必要なら "crop"（読み取り範囲）を書く。シートを省略すると data/*_sheet.json をすべて読む。
+
+読み取り結果に data/overrides.json（{文字: 点灯セグメント番号の列挙}）の上書きを適用し、
+同じ点灯パターンの文字があれば一覧を出して終了コード 1 を返す。
 """
 
 import argparse
@@ -13,25 +16,41 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from seg16 import codec, pipeline  # noqa: E402
+from seg16 import charmap, codec, pipeline  # noqa: E402
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("sheets", nargs="+")
+    ap.add_argument("sheets", nargs="*")
     ap.add_argument("-o", "--output", default=str(ROOT / "data" / "charmap.json"))
+    ap.add_argument("--overrides", default=str(ROOT / "data" / "overrides.json"))
     args = ap.parse_args()
 
-    out = Path(args.output)
-    charmap = json.loads(out.read_text()) if out.exists() else {}
-    for sheet_path in args.sheets:
+    sheets = args.sheets or sorted(str(p) for p in (ROOT / "data").glob("*_sheet.json"))
+    readings = {}
+    for sheet_path in sheets:
         sheet = json.loads(Path(sheet_path).read_text())
         for r in pipeline.read_sheet(ROOT / sheet["image"], sheet["rows"], sheet.get("crop")):
-            charmap[r.char] = codec.to_hex(codec.segments_to_int(r.segments))
-            print(r.char, charmap[r.char])
-    out.write_text(json.dumps(charmap, ensure_ascii=False, indent=2) + "\n")
-    print(f"{len(charmap)} 文字 → {out}")
+            readings[r.char] = codec.to_hex(codec.segments_to_int(r.segments))
+        print(f"{sheet_path}: 読み取り済み")
+
+    overrides_path = Path(args.overrides)
+    overrides = json.loads(overrides_path.read_text()) if overrides_path.exists() else {}
+    table = charmap.apply_overrides(readings, overrides)
+    for ch in overrides:
+        before = readings.get(ch, "----")
+        if before != table[ch]:
+            print(f"  上書き {ch}: {before} → {table[ch]}")
+
+    out = Path(args.output)
+    out.write_text(json.dumps(table, ensure_ascii=False, indent=2) + "\n")
+    print(f"{len(table)} 文字 → {out}")
+
+    dup = charmap.collisions(table)
+    for code, chars in dup.items():
+        print(f"重なり {code}: {' '.join(chars)}")
+    return 1 if dup else 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

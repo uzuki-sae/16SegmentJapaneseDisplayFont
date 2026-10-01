@@ -21,6 +21,8 @@ class Glyph:
     box: tuple  # (x0, y0, x1, y1) インク外接矩形。x1, y1 は排他
     band: tuple  # (y0, y1) 行の帯
     pixels: tuple = None  # この字に割り当てたインク画素 (ys, xs)
+    row: int = 0  # 行番号
+    col: int = 0  # 行の中での位置（空きマス "_" も数える）
 
 
 def load_gray(path):
@@ -120,13 +122,17 @@ def partition_components(intervals, count, width):
     return result
 
 
+EMPTY = "_"  # 表の空きマス
+
+
 def split_sheet(ink, rows):
-    """rows: 行ごとの文字列（その行に並ぶ文字を左から順に）。"""
+    """rows: 行ごとの文字列（その行に並ぶ文字を左から順に。"_" は空きマス）。"""
     bands = split_by_largest_gaps(ink.sum(axis=1), len(rows))
     # 文字の標準幅の目安: 行の高さの中央値の 0.8 倍
     width = 0.8 * float(np.median([y1 - y0 for y0, y1 in bands]))
     glyphs = []
-    for (y0, y1), chars in zip(bands, rows):
+    for row_no, ((y0, y1), row) in enumerate(zip(bands, rows)):
+        chars = [(c, ch) for c, ch in enumerate(row) if ch != EMPTY]
         n, labels, st, _ = cv2.connectedComponentsWithStats(
             ink[y0:y1].astype(np.uint8), connectivity=8
         )
@@ -138,7 +144,7 @@ def split_sheet(ink, rows):
             key=lambda b: b[0] + b[2],
         )
         groups = _partition([(b[0], b[2]) for b in boxes], len(chars), width)
-        for ch, (i, j) in zip(chars, groups):
+        for (col, ch), (i, j) in zip(chars, groups):
             part = boxes[i:j]
             box = (
                 min(b[0] for b in part),
@@ -147,5 +153,7 @@ def split_sheet(ink, rows):
                 max(b[3] for b in part),
             )
             ys, xs = np.nonzero(np.isin(labels, [b[4] for b in part]))
-            glyphs.append(Glyph(ch, tuple(int(v) for v in box), (y0, y1), (ys + y0, xs)))
+            glyphs.append(
+                Glyph(ch, tuple(int(v) for v in box), (y0, y1), (ys + y0, xs), row_no, col)
+            )
     return glyphs

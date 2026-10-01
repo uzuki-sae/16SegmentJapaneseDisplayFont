@@ -1,6 +1,6 @@
 """手書き画像の読み取り結果を正解データと突き合わせる。
 
-使い方: python scripts/evaluate.py data/kansuji_truth.json [--debug OUT.png]
+使い方: python scripts/evaluate.py data/kansuji_sheet.json [--debug OUT.png]
 正解 "segments" に無い文字は、読み取り結果だけを表示する（正解データ作成用）。
 """
 

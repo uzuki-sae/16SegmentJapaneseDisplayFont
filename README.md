@@ -34,11 +34,14 @@
 ```bash
 . ~/pydev/bin/activate
 python -m unittest                                  # テスト
-python scripts/evaluate.py data/kansuji_truth.json  # 手書き画像の読み取り結果を正解データと照合
-python scripts/encode.py data/kansuji_truth.json    # PART1: data/charmap.json を生成
+python scripts/evaluate.py data/kansuji_sheet.json  # 手書き画像の読み取り結果を正解データと照合
+python scripts/review.py data/katakana_sheet.json -o out/katakana_review.png  # 確認シート（手書きと読み取り結果を並べた PNG）
+python scripts/encode.py                            # PART1: data/*_sheet.json を読み、data/charmap.json を生成
 python scripts/decode.py                            # PART2: svg/<文字>.svg と svg/index.html を生成
 ```
 
-シート定義 JSON（例: `data/kansuji_truth.json`）には、画像パス `image`、行ごとの文字列 `rows`、
-評価用の正解 `segments`（点灯セグメント番号の列挙）を書く。
+- シート定義 `data/*_sheet.json`: 画像パス `image`、行ごとの文字列 `rows`（`_` は空きマス）、
+  読み取り範囲 `crop`（任意）、評価用の正解 `segments`（点灯セグメント番号の列挙。読み取りの回帰確認用）
+- 上書き `data/overrides.json`: `{文字: 点灯セグメント番号の列挙}`。手書きの読み取りより優先する設定。
+  同じ点灯パターンの文字ができると `encode.py` が警告して終了コード 1 を返す
 
