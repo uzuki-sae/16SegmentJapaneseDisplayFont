@@ -20,6 +20,11 @@ class TestCharmap(unittest.TestCase):
             {"一": "0180"},
         )
 
+    def test_svg_filename_distinguishes_letter_case(self):
+        # 大文字と小文字を区別しないファイルシステムでも別のファイルになる
+        self.assertEqual(charmap.svg_filename("A"), "A_upper.svg")
+        self.assertEqual(charmap.svg_filename("a"), "a_lower.svg")
+
     def test_svg_filename_is_safe_for_symbols(self):
         self.assertEqual(charmap.svg_filename("一"), "一.svg")
         self.assertEqual(charmap.svg_filename('"'), "U+0022.svg")
@@ -36,8 +41,13 @@ class TestCharmap(unittest.TestCase):
     def test_same_looking_pair_is_not_a_collision(self):
         # 濁点 ゛ と 秒 は同じ字形でよい組み合わせ
         self.assertEqual(charmap.collisions({"秒": "2800", "゛": "2800"}), {})
-        # 句点 。 と 〇 も同じ字形でよい
-        self.assertEqual(charmap.collisions({"〇": "0152", "。": "0152"}), {})
+        # 零 と 〇 も同じ字形でよい
+        self.assertEqual(charmap.collisions({"〇": "C9D3", "零": "C9D3"}), {})
+
+    def test_distinct_letters_must_not_collide(self):
+        # I と l、s と 5 は別の字形にしたので、重なれば検出する
+        self.assertEqual(charmap.collisions({"I": "0810", "l": "0810"}), {"0810": ["I", "l"]})
+        self.assertEqual(charmap.collisions({"s": "A112", "5": "A112"}), {"A112": ["s", "5"]})
 
 
 if __name__ == "__main__":

@@ -23,6 +23,9 @@ LICENSE_URL = "https://opensource.org/license/mit"
 KANSUJI = "〇一二三四五六七八九"
 HIRAGANA_OFFSET = 0x60  # ひらがな = カタカナ - 0x60（ぁ U+3041 〜 ゖ U+3096）
 VARIANTS = {"無": "无"}  # 異体字 {入力する字: 対照表の字}
+# 記号の別の書き方 {入力する字: 対照表の字}
+SIGNS = {"-": "−", "\uff0d": "−", "\uff0b": "+"}  # ハイフン、全角ハイフンマイナス、全角プラス
+FULLWIDTH_OFFSET = 0xFEE0  # 全角英数字 = 半角 + 0xFEE0（Ａ U+FF21 など）
 DAKUTEN, HANDAKUTEN = "゛", "゜"
 # 結合用・半角の濁点・半濁点 {入力する字: 対照表の字}
 MARK_ALIASES = {"\u3099": DAKUTEN, "\uff9e": DAKUTEN, "\u309a": HANDAKUTEN, "\uff9f": HANDAKUTEN}
@@ -57,6 +60,8 @@ def default_aliases(charmap):
     - アラビア数字 0〜9 と全角数字 ０〜９ → 漢数字 〇〜九
       （アラビア数字に独自の字形がある場合、全角数字はそちらに合わせる。例: 0 → ０）
     - ひらがな → 対応するカタカナ
+    - 全角英字 Ａ〜Ｚ・ａ〜ｚ → 半角英字
+    - 記号の別の書き方（SIGNS。ハイフン - → −、全角 ＋ → +）
     - 異体字（VARIANTS。無 → 无）
     対照表に無い字への対応や、対照表に既にある字の上書きは作らない。
     """
@@ -67,6 +72,10 @@ def default_aliases(charmap):
     for kata in charmap:
         if "\u30a1" <= kata <= "\u30f6":
             aliases[chr(ord(kata) - HIRAGANA_OFFSET)] = kata
+    for latin in charmap:
+        if latin.isascii() and latin.isalpha():
+            aliases[chr(ord(latin) + FULLWIDTH_OFFSET)] = latin
+    aliases.update(SIGNS)
     aliases.update(VARIANTS)
     aliases.update(MARK_ALIASES)
     return {a: t for a, t in aliases.items() if t in charmap and a not in charmap}

@@ -20,9 +20,11 @@ from seg16 import codec, svg  # noqa: E402
 
 FONT_PATH = Path.home() / "Library" / "Fonts" / "ipaexg.ttf"
 ON, OFF, INK, SUB = (20, 20, 20), (228, 228, 228), (30, 30, 30), (120, 120, 120)
-NUMERALS = "0〇一二三四五六七八九十百千万円"
-MARKS = "゛゜、。"
-LABELS = {"゛": "濁点", "゜": "半濁点", "、": "読点", "。": "句点"}  # 字そのものでは読みにくいものの表示名
+DIGITS = "0123456789"
+KANSUJI = "〇一二三四五六七八九十百千万円零"
+MARKS = "゛゜、。+−"
+# 字そのものでは読みにくいものの表示名
+LABELS = {"゛": "濁点", "゜": "半濁点", "、": "読点", "。": "句点", "−": "マイナス"}
 # 本来の字形とは別の形で表している字（対照リストに ※ を付けて注記する）
 NOTES = {
     "ク": "ク は、ひらがなの「く」の形で表しています",
@@ -62,14 +64,22 @@ def render_segments(path):
 
 
 def groups(charmap):
+    def pick(chars):
+        return sorted((c for c in charmap if c in chars), key=chars.index)
+
+    digits, kansuji, marks = pick(DIGITS), pick(KANSUJI), pick(MARKS)
     kana = [c for c in charmap if "゠" <= c <= "ヿ"]
-    nums = [c for c in charmap if c in NUMERALS]
-    marks = [c for c in charmap if c in MARKS]
-    kanji = [c for c in charmap if c not in kana and c not in nums and c not in marks]
-    return [("数字・単位", nums), ("カタカナ", kana), ("漢字", kanji), ("記号", marks)]
+    upper = sorted(c for c in charmap if c.isascii() and c.isupper())
+    lower = sorted(c for c in charmap if c.isascii() and c.islower())
+    used = set(digits) | set(kansuji) | set(marks) | set(kana) | set(upper) | set(lower)
+    kanji = [c for c in charmap if c not in used]
+    return [
+        ("数字（七セグ）", digits), ("漢数字・単位", kansuji), ("カタカナ", kana),
+        ("漢字", kanji), ("英大文字", upper), ("英小文字", lower), ("記号", marks),
+    ]
 
 
-def render_charmap(charmap, path, per_row=11, scale=0.55):
+def render_charmap(charmap, path, per_row=13, scale=0.55):
     st = svg.Style()
     gw, gh = int(st.width * scale), int(st.height * scale)
     cw, ch = gw + 26, gh + 58
