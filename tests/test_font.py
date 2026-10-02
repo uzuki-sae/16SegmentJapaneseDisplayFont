@@ -43,6 +43,14 @@ class TestAliases(unittest.TestCase):
         self.assertEqual(aliases["０"], "0")
         self.assertEqual(aliases["1"], "一")
 
+    def test_fullwidth_latin_and_signs(self):
+        aliases = font.default_aliases({"A": "02479B", "a": "79BEF", "+": "0990", "−": "0100"})
+        self.assertEqual(aliases["Ａ"], "A")
+        self.assertEqual(aliases["ａ"], "a")
+        self.assertEqual(aliases["-"], "−")
+        self.assertEqual(aliases["－"], "−")
+        self.assertEqual(aliases["＋"], "+")
+
     def test_no_alias_for_missing_target(self):
         aliases = font.default_aliases(CHARMAP)
         self.assertNotIn("2", aliases)  # 二 は CHARMAP に無い
