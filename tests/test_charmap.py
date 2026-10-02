@@ -41,11 +41,13 @@ class TestCharmap(unittest.TestCase):
     def test_same_looking_pair_is_not_a_collision(self):
         # 濁点 ゛ と 秒 は同じ字形でよい組み合わせ
         self.assertEqual(charmap.collisions({"秒": "2800", "゛": "2800"}), {})
-        # 零 と 〇、I と l と 1 なども同じ字形でよい
+        # 零 と 〇 も同じ字形でよい
         self.assertEqual(charmap.collisions({"〇": "C9D3", "零": "C9D3"}), {})
-        self.assertEqual(charmap.collisions({"I": "0810", "l": "0810", "1": "0810"}), {})
-        # 組の一部だけが重なっても許す
-        self.assertEqual(charmap.collisions({"I": "0810", "l": "0810"}), {})
+
+    def test_distinct_letters_must_not_collide(self):
+        # I と l、s と 5 は別の字形にしたので、重なれば検出する
+        self.assertEqual(charmap.collisions({"I": "0810", "l": "0810"}), {"0810": ["I", "l"]})
+        self.assertEqual(charmap.collisions({"s": "A112", "5": "A112"}), {"A112": ["s", "5"]})
 
 
 if __name__ == "__main__":
