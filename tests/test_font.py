@@ -85,8 +85,8 @@ class TestBuildFont(unittest.TestCase):
     def test_license_and_copyright_in_name_table(self):
         name = self.font["name"]
         self.assertIn("uzuki-sae", name.getDebugName(0))
-        self.assertIn("MIT License", name.getDebugName(13))
-        self.assertEqual(name.getDebugName(14), "https://opensource.org/license/mit")
+        self.assertIn("CC BY-SA 4.0", name.getDebugName(13))
+        self.assertEqual(name.getDebugName(14), "https://creativecommons.org/licenses/by-sa/4.0/")
 
     def test_voiced_kana_are_split_by_ccmp(self):
         cmap = self.font.getBestCmap()

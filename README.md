@@ -228,11 +228,17 @@ python scripts/encode.py                                         # data/*_sheet.
 
 ## ライセンス
 
-フォント・プログラム・画像を含むリポジトリ全体を [MIT License](LICENSE) で公開します。
-利用・改変・再配布・商用利用は自由です。再配布するときは、著作権表示（`Copyright (c) 2026 uzuki-sae`）と
-ライセンス文を残してください。
+フォント・プログラム・画像を含むリポジトリ全体を
+[CC BY-SA 4.0（クリエイティブ・コモンズ 表示－継承 4.0 国際）](https://creativecommons.org/licenses/by-sa/4.0/deed.ja)
+で公開します。条文は [LICENSE](LICENSE) にあります。
 
-MIT ― Made in Taiwan.
+| | |
+|---|---|
+| 利用・改変・再配布・商用利用 | できます |
+| 表示 | 作者（`uzuki-sae`）とライセンスを表示し、改変した場合はその旨を示してください |
+| 継承 | 改変したものを公開するときは、同じ CC BY-SA 4.0 で公開してください |
+
+Made in Taiwan.
 
 ### 出典
 
