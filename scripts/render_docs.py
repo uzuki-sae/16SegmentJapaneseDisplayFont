@@ -29,11 +29,18 @@ LABELS = {
     "゛": "濁点", "゜": "半濁点", "、": "読点", "。": "句点", "ー": "長音符",
     "−": "マイナス", "-": "ハイフン", "_": "下線", ".": "ピリオド", ":": "コロン", "°": "度",
 }
-# 本来の字形とは別の形で表している字（対照リストに ※ を付けて注記する）
+# 他の資料の字形に基づく字の出典
+WIKIMEDIA_NOTE = (
+    "ソ・ム の字形は、Wikimedia Commons「16SISD-Katakana.gif」"
+    "（作者 Arumaddilo、CC BY-SA 4.0）に基づきます"
+)
+# 本来の字形とは別の形で表している字・出典のある字（対照リストに ※ を付けて注記する）
 NOTES = {
     "ク": "ク は、ひらがなの「く」の形で表しています",
     "キ": "キ は、「木」の篆書の形で代用しています",
     "无": "无 は「無」の異体字です（フォントでは「無」を入力しても表示されます）",
+    "ソ": WIKIMEDIA_NOTE,
+    "ム": WIKIMEDIA_NOTE,
     "゛": "濁点・半濁点の付いた字（ガ・パ など）は、フォントでは「カ＋濁点」「ハ＋半濁点」の 2 マスで表示されます",
 }
 
@@ -91,7 +98,7 @@ def render_charmap(charmap, path, per_row=13, scale=0.55):
     cw, ch = gw + 26, gh + 58
     title_h = 40
     blocks = [(name, chars) for name, chars in groups(charmap) if chars]
-    notes = [NOTES[c] for _, chars in blocks for c in chars if c in NOTES]
+    notes = list(dict.fromkeys(NOTES[c] for _, chars in blocks for c in chars if c in NOTES))
     note_h = 30
     height = 20 + sum(title_h + ((len(c) + per_row - 1) // per_row) * ch + 16 for _, c in blocks)
     height += len(notes) * note_h + (10 if notes else 0)
