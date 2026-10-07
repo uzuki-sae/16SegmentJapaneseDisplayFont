@@ -1,28 +1,11 @@
 """対照表（文字 → 16進4桁）の組み立て。"""
 
 from .codec import segments_to_int, to_hex
-from .layout import NAME_ORDER, NAME_SEGMENTS, SEGMENT_NAMES
 
 
-def parse_segments(value):
-    """点灯セグメントの指定をセグメント集合にする。
-
-    - 名前のリスト: ["g1", "g2", "d1", "d2"]（a1〜m。layout.SEGMENT_NAMES）
-    - セグメント番号の列挙: "78EF"（0〜F）
-    b・c・e・f は 16 進の数字と同じ文字なので、名前は必ずリストで書く。
-    """
-    if isinstance(value, str):
-        return {int(c, 16) for c in value}
-    unknown = [n for n in value if n not in NAME_SEGMENTS]
-    if unknown:
-        raise ValueError(f"unknown segment name: {unknown}")
-    return {NAME_SEGMENTS[n] for n in value}
-
-
-def segment_names(segments):
-    """セグメント集合を、名前のリスト（a1 a2 b c ... l m の順）にする。"""
-    names = {SEGMENT_NAMES[s] for s in segments}
-    return [n for n in NAME_ORDER if n in names]
+def parse_segments(text):
+    """"78EF" のような点灯セグメント番号の列挙をセグメント集合にする。"""
+    return {int(c, 16) for c in text}
 
 
 def apply_overrides(readings, overrides):

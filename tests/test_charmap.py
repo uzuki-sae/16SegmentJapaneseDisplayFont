@@ -14,21 +14,6 @@ class TestCharmap(unittest.TestCase):
     def test_override_for_unread_char_is_added(self):
         self.assertEqual(charmap.apply_overrides({}, {"ミ": "07E"}), {"ミ": "8102"})
 
-    def test_segments_can_be_given_by_name(self):
-        self.assertEqual(charmap.parse_segments(["g1", "g2"]), {7, 8})
-        self.assertEqual(charmap.parse_segments("78"), {7, 8})
-        self.assertEqual(
-            charmap.apply_overrides({}, {"一": ["g1", "g2"]}), {"一": "0180"}
-        )
-
-    def test_unknown_segment_name_raises(self):
-        with self.assertRaises(ValueError):
-            charmap.parse_segments(["g3"])
-
-    def test_names_of_segments_in_label_order(self):
-        # 表示は a1 a2 b c d1 d2 e f g1 g2 h i j k l m の順
-        self.assertEqual(charmap.segment_names({0xF, 7, 8, 0xE}), ["d1", "d2", "g1", "g2"])
-
     def test_null_override_removes_char(self):
         self.assertEqual(
             charmap.apply_overrides({"木": "08B8", "一": "0180"}, {"木": None}),

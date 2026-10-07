@@ -17,7 +17,6 @@ sys.path.insert(0, str(ROOT))
 from PIL import Image, ImageDraw, ImageFont  # noqa: E402
 
 from seg16 import codec, svg  # noqa: E402
-from seg16.layout import SEGMENT_NAMES  # noqa: E402
 
 FONT_PATH = Path.home() / "Library" / "Fonts" / "ipaexg.ttf"
 ON, OFF, INK, SUB = (20, 20, 20), (228, 228, 228), (30, 30, 30), (120, 120, 120)
@@ -60,19 +59,17 @@ def draw_glyph(d, segments, x, y, scale, st=None):
 
 
 def render_segments(path):
-    """セグメントの名前（a1〜m）と、ビット番号（0〜F）の配置図。"""
     st, scale = svg.Style(), 3.0
     w, h = int(st.width * scale), int(st.height * scale)
     im = Image.new("RGB", (w + 40, h + 40), "white")
     d = ImageDraw.Draw(im)
     draw_glyph(d, set(), 20, 20, scale, st)
-    f_name, f_bit = font(24), font(13)
+    f = font(26)
     for s in range(16):
         pts = svg.segment_polygon(s, st)
         cx = sum(p[0] for p in pts) / len(pts) * scale + 20
         cy = sum(p[1] for p in pts) / len(pts) * scale + 20
-        d.text((cx, cy - 6), SEGMENT_NAMES[s], font=f_name, fill=(200, 0, 0), anchor="mm")
-        d.text((cx, cy + 14), f"{s:X}", font=f_bit, fill=SUB, anchor="mm")
+        d.text((cx, cy), f"{s:X}", font=f, fill=(200, 0, 0), anchor="mm")
     im.save(path)
 
 

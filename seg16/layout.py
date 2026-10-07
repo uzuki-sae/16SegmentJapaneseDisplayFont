@@ -41,16 +41,3 @@ SEGMENT_LINES = {
 }
 
 CELL_SEGMENTS = {cell: seg for seg, cell in SEGMENT_CELLS.items()}
-
-# セグメント番号 -> 慣用の名前（7 セグの a〜g を拡張したもの。Wikipedia「Segment display」の図に準拠）
-#   a1 a2: 上段の横棒（左・右）   b c: 右の縦棒（上・下）   d1 d2: 下段の横棒（左・右）
-#   e f: 左の縦棒（下・上）       g1 g2: 中段の横棒（左・右）
-#   h i j: 上半分の斜め＼・縦・斜め／   k l m: 下半分の斜め／・縦・斜め＼
-SEGMENT_NAMES = {
-    0x0: "a1", 0x1: "a2", 0x2: "f", 0x3: "h", 0x4: "i", 0x5: "j", 0x6: "b",
-    0x7: "g1", 0x8: "g2", 0x9: "e", 0xA: "k", 0xB: "l", 0xC: "m", 0xD: "c",
-    0xE: "d1", 0xF: "d2",
-}
-NAME_SEGMENTS = {name: seg for seg, name in SEGMENT_NAMES.items()}
-# 名前を並べるときの順番（a1 a2 b c d1 d2 e f g1 g2 h i j k l m）
-NAME_ORDER = sorted(NAME_SEGMENTS, key=lambda n: (n[0], n))
