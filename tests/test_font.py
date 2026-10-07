@@ -82,6 +82,14 @@ class TestBuildFont(unittest.TestCase):
         for ch in list(CHARMAP) + [" "]:
             self.assertIn(ord(ch), cmap)
 
+    def test_font_names_in_english_and_japanese(self):
+        name = self.font["name"]
+        self.assertEqual(name.getDebugName(1), "16-segment Japanese display font")
+        self.assertEqual(name.getDebugName(6), "16SegmentJapaneseDisplayFont-Regular")
+        ja = name.getName(1, 3, 1, 0x411)  # Windows・日本語のファミリー名
+        self.assertIsNotNone(ja)
+        self.assertEqual(ja.toUnicode(), "16セグ漢数字カタカナ表示器")
+
     def test_license_and_copyright_in_name_table(self):
         name = self.font["name"]
         self.assertIn("uzuki-sae", name.getDebugName(0))

@@ -16,7 +16,9 @@ from .svg import Style, segment_polygon
 UNITS_PER_EM = 1000
 SCALE = 6.5  # SVG 1 単位 → フォント単位。Style の 100x140 が 650x910 になる
 DESCENT = 120  # 字の下端をベースラインからどれだけ下げるか
-FAMILY = "Seg16"
+FAMILY = "16-segment Japanese display font"  # 英語のフォント名
+FAMILY_JA = "16セグ漢数字カタカナ表示器"  # 日本語のフォント名
+PS_NAME = "16SegmentJapaneseDisplayFont"  # PostScript 名・ファイル名（空白を入れられない）
 COPYRIGHT = "Copyright (c) 2026 uzuki-sae"
 LICENSE = (
     "This font is licensed under CC BY-SA 4.0 "
@@ -119,7 +121,10 @@ def glyph_name(ch):
     return f"uni{ord(ch):04X}" if ord(ch) <= 0xFFFF else f"u{ord(ch):05X}"
 
 
-def build_font(charmap, path, st=None, family=FAMILY, version="0.1", aliases=None):
+def build_font(
+    charmap, path, st=None, family=FAMILY, family_ja=FAMILY_JA, ps_name=PS_NAME,
+    version="0.1", aliases=None,
+):
     """charmap: {文字: 16進4桁}。path に .otf を書き出す。
 
     aliases: {別名の文字: 対照表の文字}。省略すると default_aliases を使う。
@@ -149,18 +154,18 @@ def build_font(charmap, path, st=None, family=FAMILY, version="0.1", aliases=Non
     cmap.update({ord(a): names[t] for a, t in aliases.items()})
     fb.setupCharacterMap(cmap)
     fb.setupCFF(
-        f"{family}-Regular", {"FullName": f"{family} Regular"}, charstrings, {}
+        f"{ps_name}-Regular", {"FullName": f"{family} Regular"}, charstrings, {}
     )
     fb.setupHorizontalMetrics({g: (width, 0) for g in order})
     fb.setupHorizontalHeader(ascent=ascent, descent=-DESCENT)
     fb.setupNameTable(
         {
             "copyright": COPYRIGHT,
-            "familyName": family,
+            "familyName": {"en": family, "ja": family_ja},
             "styleName": "Regular",
-            "uniqueFontIdentifier": f"{family}-Regular-{version}",
-            "fullName": f"{family} Regular",
-            "psName": f"{family}-Regular",
+            "uniqueFontIdentifier": f"{ps_name}-Regular-{version}",
+            "fullName": {"en": f"{family} Regular", "ja": family_ja},
+            "psName": f"{ps_name}-Regular",
             "version": f"Version {version}",
             "licenseDescription": LICENSE,
             "licenseInfoURL": LICENSE_URL,

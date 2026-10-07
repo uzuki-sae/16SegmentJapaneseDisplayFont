@@ -1,4 +1,6 @@
-# 16segmen_font
+# 16セグ漢数字カタカナ表示器
+
+16-segment Japanese display font
 
 漢数字をデジタル表示する仕組みを、パソコンで使えるフォントにしたものです。
 
@@ -11,7 +13,7 @@
 この仕組みを、イギリス国旗のように「米」の字に「田」の字を重ねた形に並べた 16 本のセグメントへ広げると、
 漢数字やカタカナ、簡単な漢字まで表示できます。
 英字と、従来の 7 セグメント表示と同じ形の数字も収録しています。
-こうして作った字形を、ついでにパソコン用のフォント（`Seg16-Regular.otf`）にしました。
+こうして作った字形を、ついでにパソコン用のフォント「16セグ漢数字カタカナ表示器」（`16SegmentJapaneseDisplayFont-Regular.otf`）にしました。
 
 ![対照リスト](docs/charmap.png)
 
@@ -140,7 +142,7 @@ flowchart TD
     F --> G[上書き設定を適用<br>重なりを確認]
     G --> H[(data/charmap.json)]
     H --> I[SVG<br>svg/]
-    H --> J[OpenType フォント<br>Seg16-Regular.otf]
+    H --> J[OpenType フォント<br>16SegmentJapaneseDisplayFont-Regular.otf]
 ```
 
 1. **2値化**: 薄いしきい値でつながる領域のうち、濃い画素を含むものだけをインクとします（ヒステリシス2値化）。
@@ -169,7 +171,7 @@ Python 3.13、Pillow、NumPy、OpenCV（`opencv-python`）、fontTools を使い
 ```bash
 python -m unittest                # テスト
 python scripts/decode.py          # 対照表から svg/<文字>.svg と svg/index.html を生成
-python scripts/build_font.py      # 対照表から Seg16-Regular.otf を生成
+python scripts/build_font.py      # 対照表から 16SegmentJapaneseDisplayFont-Regular.otf を生成
 python scripts/render_docs.py     # README 用の画像 docs/segments.png・docs/charmap.png を生成
 ```
 
@@ -209,7 +211,7 @@ python scripts/encode.py                                         # data/*_sheet.
 
 | パス | 内容 |
 |---|---|
-| `Seg16-Regular.otf` | 生成したフォント（CFF、等幅） |
+| `16SegmentJapaneseDisplayFont-Regular.otf` | 生成したフォント（CFF、等幅） |
 | `data/charmap.json` | 対照表 `{文字: 16進4桁}` |
 | `data/overrides.json` | 上書き設定 `{文字: 点灯セグメント番号の列挙}` |
 | `svg/` | 文字ごとの SVG と一覧ページ `index.html` |

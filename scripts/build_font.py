@@ -1,6 +1,6 @@
 """PART3: 対照表から OpenType フォントを作る。
 
-使い方: python scripts/build_font.py [data/charmap.json] [-o Seg16-Regular.otf]
+使い方: python scripts/build_font.py [data/charmap.json] [-o 16SegmentJapaneseDisplayFont-Regular.otf]
 """
 
 import argparse
@@ -17,7 +17,7 @@ from seg16 import font  # noqa: E402
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("charmap", nargs="?", default=str(ROOT / "data" / "charmap.json"))
-    ap.add_argument("-o", "--output", default=str(ROOT / "Seg16-Regular.otf"))
+    ap.add_argument("-o", "--output", default=str(ROOT / f"{font.PS_NAME}-Regular.otf"))
     args = ap.parse_args()
 
     charmap = json.loads(Path(args.charmap).read_text())
