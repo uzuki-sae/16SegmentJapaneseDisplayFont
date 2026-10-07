@@ -23,6 +23,17 @@ class TestLayout(unittest.TestCase):
             self.assertEqual([s for _, s in got], segs)
 
 
+class TestSegmentNames(unittest.TestCase):
+    def test_names_follow_common_16_segment_labels(self):
+        # Wikipedia「Segment display」の 16 セグの図と同じ名前
+        expected = {
+            0x0: "a1", 0x1: "a2", 0x6: "b", 0xD: "c", 0xE: "d1", 0xF: "d2",
+            0x9: "e", 0x2: "f", 0x7: "g1", 0x8: "g2",
+            0x3: "h", 0x4: "i", 0x5: "j", 0xA: "k", 0xB: "l", 0xC: "m",
+        }
+        self.assertEqual({s: layout.SEGMENT_NAMES[s] for s in range(16)}, expected)
+
+
 class TestCodec(unittest.TestCase):
     def test_segment0_is_msb(self):
         self.assertEqual(codec.segments_to_int({0}), 0x8000)
