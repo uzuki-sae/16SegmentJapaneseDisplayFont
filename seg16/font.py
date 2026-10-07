@@ -16,16 +16,21 @@ from .svg import Style, segment_polygon
 UNITS_PER_EM = 1000
 SCALE = 6.5  # SVG 1 単位 → フォント単位。Style の 100x140 が 650x910 になる
 DESCENT = 120  # 字の下端をベースラインからどれだけ下げるか
-FAMILY = "Seg16"
+FAMILY = "16-segment Japanese display font"  # 英語のフォント名
+FAMILY_JA = "16セグ漢数字カタカナ表示器"  # 日本語のフォント名
+PS_NAME = "16SegmentJapaneseDisplayFont"  # PostScript 名・ファイル名（空白を入れられない）
 COPYRIGHT = "Copyright (c) 2026 uzuki-sae"
-LICENSE = "This Font Software is licensed under the MIT License."
-LICENSE_URL = "https://opensource.org/license/mit"
+LICENSE = (
+    "This font is licensed under CC BY-SA 4.0 "
+    "(Creative Commons Attribution-ShareAlike 4.0 International)."
+)
+LICENSE_URL = "https://creativecommons.org/licenses/by-sa/4.0/"
 KANSUJI = "〇一二三四五六七八九"
 HIRAGANA_OFFSET = 0x60  # ひらがな = カタカナ - 0x60（ぁ U+3041 〜 ゖ U+3096）
 VARIANTS = {"無": "无"}  # 異体字 {入力する字: 対照表の字}
-# 記号の別の書き方 {入力する字: 対照表の字}
-SIGNS = {"-": "−", "\uff0d": "−", "\uff0b": "+"}  # ハイフン、全角ハイフンマイナス、全角プラス
-FULLWIDTH_OFFSET = 0xFEE0  # 全角英数字 = 半角 + 0xFEE0（Ａ U+FF21 など）
+# 半角カナの記号 {入力する字: 対照表の字}
+SIGNS = {"\uff70": "ー", "\uff64": "、", "\uff61": "。"}  # ｰ ､ ｡
+FULLWIDTH_OFFSET = 0xFEE0  # 全角英数字・記号 = 半角 + 0xFEE0（Ａ U+FF21、＝ U+FF1D など）
 DAKUTEN, HANDAKUTEN = "゛", "゜"
 # 結合用・半角の濁点・半濁点 {入力する字: 対照表の字}
 MARK_ALIASES = {"\u3099": DAKUTEN, "\uff9e": DAKUTEN, "\u309a": HANDAKUTEN, "\uff9f": HANDAKUTEN}
@@ -60,8 +65,8 @@ def default_aliases(charmap):
     - アラビア数字 0〜9 と全角数字 ０〜９ → 漢数字 〇〜九
       （アラビア数字に独自の字形がある場合、全角数字はそちらに合わせる。例: 0 → ０）
     - ひらがな → 対応するカタカナ
-    - 全角英字 Ａ〜Ｚ・ａ〜ｚ → 半角英字
-    - 記号の別の書き方（SIGNS。ハイフン - → −、全角 ＋ → +）
+    - 全角英字・全角記号（Ａ〜Ｚ・ａ〜ｚ・＝・＋ など）→ 半角の英字・記号
+    - 半角カナの記号（SIGNS。ｰ → ー、､ → 、、｡ → 。）
     - 異体字（VARIANTS。無 → 无）
     対照表に無い字への対応や、対照表に既にある字の上書きは作らない。
     """
@@ -72,9 +77,9 @@ def default_aliases(charmap):
     for kata in charmap:
         if "\u30a1" <= kata <= "\u30f6":
             aliases[chr(ord(kata) - HIRAGANA_OFFSET)] = kata
-    for latin in charmap:
-        if latin.isascii() and latin.isalpha():
-            aliases[chr(ord(latin) + FULLWIDTH_OFFSET)] = latin
+    for ch in charmap:
+        if ch.isascii() and ch.isprintable() and ch != " " and not ch.isdigit():
+            aliases[chr(ord(ch) + FULLWIDTH_OFFSET)] = ch
     aliases.update(SIGNS)
     aliases.update(VARIANTS)
     aliases.update(MARK_ALIASES)
@@ -116,7 +121,10 @@ def glyph_name(ch):
     return f"uni{ord(ch):04X}" if ord(ch) <= 0xFFFF else f"u{ord(ch):05X}"
 
 
-def build_font(charmap, path, st=None, family=FAMILY, version="0.1", aliases=None):
+def build_font(
+    charmap, path, st=None, family=FAMILY, family_ja=FAMILY_JA, ps_name=PS_NAME,
+    version="0.1", aliases=None,
+):
     """charmap: {文字: 16進4桁}。path に .otf を書き出す。
 
     aliases: {別名の文字: 対照表の文字}。省略すると default_aliases を使う。
@@ -146,18 +154,18 @@ def build_font(charmap, path, st=None, family=FAMILY, version="0.1", aliases=Non
     cmap.update({ord(a): names[t] for a, t in aliases.items()})
     fb.setupCharacterMap(cmap)
     fb.setupCFF(
-        f"{family}-Regular", {"FullName": f"{family} Regular"}, charstrings, {}
+        f"{ps_name}-Regular", {"FullName": f"{family} Regular"}, charstrings, {}
     )
     fb.setupHorizontalMetrics({g: (width, 0) for g in order})
     fb.setupHorizontalHeader(ascent=ascent, descent=-DESCENT)
     fb.setupNameTable(
         {
             "copyright": COPYRIGHT,
-            "familyName": family,
+            "familyName": {"en": family, "ja": family_ja},
             "styleName": "Regular",
-            "uniqueFontIdentifier": f"{family}-Regular-{version}",
-            "fullName": f"{family} Regular",
-            "psName": f"{family}-Regular",
+            "uniqueFontIdentifier": f"{ps_name}-Regular-{version}",
+            "fullName": {"en": f"{family} Regular", "ja": family_ja},
+            "psName": f"{ps_name}-Regular",
             "version": f"Version {version}",
             "licenseDescription": LICENSE,
             "licenseInfoURL": LICENSE_URL,

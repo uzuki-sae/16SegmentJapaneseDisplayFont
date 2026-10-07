@@ -44,12 +44,16 @@ class TestAliases(unittest.TestCase):
         self.assertEqual(aliases["1"], "一")
 
     def test_fullwidth_latin_and_signs(self):
-        aliases = font.default_aliases({"A": "02479B", "a": "79BEF", "+": "0990", "−": "0100"})
+        aliases = font.default_aliases(
+            {"A": "02479B", "a": "79BEF", "+": "0990", "-": "0080", "=": "C180", "ー": "0180"}
+        )
         self.assertEqual(aliases["Ａ"], "A")
         self.assertEqual(aliases["ａ"], "a")
-        self.assertEqual(aliases["-"], "−")
-        self.assertEqual(aliases["－"], "−")
+        self.assertNotIn("-", aliases)  # - は独自の字形
+        self.assertEqual(aliases["－"], "-")  # 全角の記号は半角の記号の字形
+        self.assertEqual(aliases["＝"], "=")
         self.assertEqual(aliases["＋"], "+")
+        self.assertEqual(aliases["ｰ"], "ー")  # 半角カナの長音符
 
     def test_no_alias_for_missing_target(self):
         aliases = font.default_aliases(CHARMAP)
@@ -78,11 +82,19 @@ class TestBuildFont(unittest.TestCase):
         for ch in list(CHARMAP) + [" "]:
             self.assertIn(ord(ch), cmap)
 
+    def test_font_names_in_english_and_japanese(self):
+        name = self.font["name"]
+        self.assertEqual(name.getDebugName(1), "16-segment Japanese display font")
+        self.assertEqual(name.getDebugName(6), "16SegmentJapaneseDisplayFont-Regular")
+        ja = name.getName(1, 3, 1, 0x411)  # Windows・日本語のファミリー名
+        self.assertIsNotNone(ja)
+        self.assertEqual(ja.toUnicode(), "16セグ漢数字カタカナ表示器")
+
     def test_license_and_copyright_in_name_table(self):
         name = self.font["name"]
         self.assertIn("uzuki-sae", name.getDebugName(0))
-        self.assertIn("MIT License", name.getDebugName(13))
-        self.assertEqual(name.getDebugName(14), "https://opensource.org/license/mit")
+        self.assertIn("CC BY-SA 4.0", name.getDebugName(13))
+        self.assertEqual(name.getDebugName(14), "https://creativecommons.org/licenses/by-sa/4.0/")
 
     def test_voiced_kana_are_split_by_ccmp(self):
         cmap = self.font.getBestCmap()

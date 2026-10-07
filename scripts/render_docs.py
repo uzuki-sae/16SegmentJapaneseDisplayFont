@@ -22,14 +22,25 @@ FONT_PATH = Path.home() / "Library" / "Fonts" / "ipaexg.ttf"
 ON, OFF, INK, SUB = (20, 20, 20), (228, 228, 228), (30, 30, 30), (120, 120, 120)
 DIGITS = "0123456789"
 KANSUJI = "〇一二三四五六七八九十百千万円零"
-MARKS = "゛゜、。+−"
+MARKS = "゛゜、。ー+−-=_/\\<>*%°():."
 # 字そのものでは読みにくいものの表示名
-LABELS = {"゛": "濁点", "゜": "半濁点", "、": "読点", "。": "句点", "−": "マイナス"}
-# 本来の字形とは別の形で表している字（対照リストに ※ を付けて注記する）
+LABELS = {
+    "゛": "濁点", "゜": "半濁点", "、": "読点", "。": "句点", "ー": "長音符",
+    "−": "マイナス", "-": "ハイフン", "_": "下線", ".": "ピリオド", ":": "コロン", "°": "度",
+}
+# 他の資料の字形に基づく字の出典
+WIKIMEDIA_NOTE = (
+    "ソ・ヘ・ム の字形は、Wikimedia Commons「16SISD-Katakana.gif」"
+    "（作者 Arumaddilo、CC BY-SA 4.0）に基づきます"
+)
+# 本来の字形とは別の形で表している字・出典のある字（対照リストに ※ を付けて注記する）
 NOTES = {
     "ク": "ク は、ひらがなの「く」の形で表しています",
     "キ": "キ は、「木」の篆書の形で代用しています",
     "无": "无 は「無」の異体字です（フォントでは「無」を入力しても表示されます）",
+    "ソ": WIKIMEDIA_NOTE,
+    "ヘ": WIKIMEDIA_NOTE,
+    "ム": WIKIMEDIA_NOTE,
     "゛": "濁点・半濁点の付いた字（ガ・パ など）は、フォントでは「カ＋濁点」「ハ＋半濁点」の 2 マスで表示されます",
 }
 
@@ -68,7 +79,7 @@ def groups(charmap):
         return sorted((c for c in charmap if c in chars), key=chars.index)
 
     digits, kansuji, marks = pick(DIGITS), pick(KANSUJI), pick(MARKS)
-    kana = [c for c in charmap if "゠" <= c <= "ヿ"]
+    kana = [c for c in charmap if "゠" <= c <= "ヿ" and c not in marks]
     upper = sorted(c for c in charmap if c.isascii() and c.isupper())
     lower = sorted(c for c in charmap if c.isascii() and c.islower())
     used = set(digits) | set(kansuji) | set(marks) | set(kana) | set(upper) | set(lower)
@@ -85,13 +96,14 @@ def render_charmap(charmap, path, per_row=13, scale=0.55):
     cw, ch = gw + 26, gh + 58
     title_h = 40
     blocks = [(name, chars) for name, chars in groups(charmap) if chars]
-    notes = [NOTES[c] for _, chars in blocks for c in chars if c in NOTES]
+    notes = list(dict.fromkeys(NOTES[c] for _, chars in blocks for c in chars if c in NOTES))
     note_h = 30
     height = 20 + sum(title_h + ((len(c) + per_row - 1) // per_row) * ch + 16 for _, c in blocks)
     height += len(notes) * note_h + (10 if notes else 0)
     im = Image.new("RGB", (per_row * cw + 30, height), "white")
     d = ImageDraw.Draw(im)
     f_title, f_char, f_hex = font(22), font(20), font(15)
+    f_long = font(14)  # 長い表示名（マイナス・ハイフン など）は隣と重ならないよう小さくする
     y = 20
     for name, chars in blocks:
         d.text((15, y), f"{name}（{len(chars)}字）", font=f_title, fill=INK)
@@ -101,7 +113,8 @@ def render_charmap(charmap, path, per_row=13, scale=0.55):
             x0, y0 = 15 + k * cw, y + r * ch
             draw_glyph(d, codec.int_to_segments(codec.from_hex(charmap[c])), x0 + 13, y0, scale, st)
             label = LABELS.get(c, c) + ("※" if c in NOTES else "")
-            d.text((x0 + cw / 2, y0 + gh + 6), label, font=f_char, fill=INK, anchor="mt")
+            f_label = f_char if len(label) <= 3 else f_long
+            d.text((x0 + cw / 2, y0 + gh + 6), label, font=f_label, fill=INK, anchor="mt")
             d.text((x0 + cw / 2, y0 + gh + 32), charmap[c], font=f_hex, fill=SUB, anchor="mt")
         y += ((len(chars) + per_row - 1) // per_row) * ch + 16
     for note in notes:
