@@ -30,7 +30,7 @@ LABELS = {
 }
 # 他の資料の字形に基づく字の出典
 WIKIMEDIA_NOTE = (
-    "ソ・ム の字形は、Wikimedia Commons「16SISD-Katakana.gif」"
+    "ソ・ヘ・ム の字形は、Wikimedia Commons「16SISD-Katakana.gif」"
     "（作者 Arumaddilo、CC BY-SA 4.0）に基づきます"
 )
 # 本来の字形とは別の形で表している字・出典のある字（対照リストに ※ を付けて注記する）
@@ -39,6 +39,7 @@ NOTES = {
     "キ": "キ は、「木」の篆書の形で代用しています",
     "无": "无 は「無」の異体字です（フォントでは「無」を入力しても表示されます）",
     "ソ": WIKIMEDIA_NOTE,
+    "ヘ": WIKIMEDIA_NOTE,
     "ム": WIKIMEDIA_NOTE,
     "゛": "濁点・半濁点の付いた字（ガ・パ など）は、フォントでは「カ＋濁点」「ハ＋半濁点」の 2 マスで表示されます",
 }
