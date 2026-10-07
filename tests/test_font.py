@@ -44,12 +44,16 @@ class TestAliases(unittest.TestCase):
         self.assertEqual(aliases["1"], "一")
 
     def test_fullwidth_latin_and_signs(self):
-        aliases = font.default_aliases({"A": "02479B", "a": "79BEF", "+": "0990", "−": "0100"})
+        aliases = font.default_aliases(
+            {"A": "02479B", "a": "79BEF", "+": "0990", "-": "0080", "=": "C180", "ー": "0180"}
+        )
         self.assertEqual(aliases["Ａ"], "A")
         self.assertEqual(aliases["ａ"], "a")
-        self.assertEqual(aliases["-"], "−")
-        self.assertEqual(aliases["－"], "−")
+        self.assertNotIn("-", aliases)  # - は独自の字形
+        self.assertEqual(aliases["－"], "-")  # 全角の記号は半角の記号の字形
+        self.assertEqual(aliases["＝"], "=")
         self.assertEqual(aliases["＋"], "+")
+        self.assertEqual(aliases["ｰ"], "ー")  # 半角カナの長音符
 
     def test_no_alias_for_missing_target(self):
         aliases = font.default_aliases(CHARMAP)
